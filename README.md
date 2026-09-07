@@ -1,6 +1,14 @@
 # Seafood Recipes
 
-An iPhone demo of SwiftUI state, view identity, and cooperative cancellation using a real HTTP API. It displays Seafood recipes from [TheMealDB](https://www.themealdb.com/documentation), with initial loading, pull-to-refresh, local name search, empty results, retry, and a recipe detail screen.
+[![CI](https://github.com/kamilgomolka/demo-seafood-recipes/actions/workflows/ci.yml/badge.svg)](https://github.com/kamilgomolka/demo-seafood-recipes/actions/workflows/ci.yml)
+[![Swift](https://img.shields.io/badge/Swift-6.2-F05138.svg)](https://swift.org)
+[![Platform](https://img.shields.io/badge/iOS-26.0%2B-000000.svg)](https://developer.apple.com/ios/)
+[![Xcode](https://img.shields.io/badge/Xcode-26-1575F9.svg)](https://developer.apple.com/xcode/)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
+
+An iPhone demo app, with a simple List-Details UI, and a basic networking. The main goal of this project was to exercise good practices around Swift Concurrency (`async`/`await`, actor isolation, Tasks, cooperative cancellation, and unit testing async code). Other aspects of the application are intentionally simplified - it's not a complete product, just a Swift concurrency playground. 
+
+The app uses [TheMealDB](https://www.themealdb.com/documentation) to load Seafood recipes, supports initial loading, pull-to-refresh, local name search, empty results, retry, and a recipe detail screen.
 
 ## Run
 
@@ -16,32 +24,32 @@ make test
 make lint
 ```
 
-The default destination is iPhone 17 Pro. Override it with `SIMULATOR='device name'`. The existing build phase runs `swift-format` in place before compilation.
+The default destination is iPhone 17 Pro. Override it with `SIMULATOR='device name'`. Formatting and linting use the checked-in `.swift-format` configuration.
 
 ## Architecture
 
 | Type | Responsibility |
 | --- | --- |
-| `SeafoodList` | List, presentation, gestures, navigation, and ownership of work tied to the screen |
-| `SeafoodListViewModel` | Observable list state, admission of requests, and state transitions |
-| `SeafoodListState` | Initial loading/failure and loaded content with its refresh state |
-| `SeafoodDetailView` | Recipe screen; owns a ViewModel in `@State` |
-| `SeafoodDetailViewModel` | Single lookup, load/retry/cancel without refresh nesting |
+| `SeafoodList` | List, presentation, gestures, navigation, and ownership of screen-bound work |
+| `SeafoodListViewModel` | Observable list state, request admission, state transitions, and cancellation-safe result publishing |
+| `SeafoodListState` | Initial loading/failure and loaded content with nested refresh state |
+| `SeafoodDetailView` | Recipe screen; owns a detail ViewModel in `@State` |
+| `SeafoodDetailViewModel` | Single lookup flow with load, retry, and cancellation handling |
 | `SeafoodDetailState` | idle, loading, failed, loaded |
-| `MealService` | Typed-throwing list filter and meal lookup |
-| `MealAPIClient` | URLSession, HTTP validation, decoding, and error classification |
+| `MealService` | Async contract for list filtering and meal lookup with typed errors |
+| `MealAPIClient` | URLSession, HTTP validation, decoding, executor isolation, and error classification |
 | `Meal` | Immutable, Sendable list row with an API-provided identity |
-| `MealDetails` | Full recipe: ingredients, instructions, category, area |
+| `MealDetails` | Full recipe model with ingredients, instructions, category, and area |
 
-The feature is in `DemoSeafoodRecipes/Source/Features/SeafoodList/` and `SeafoodDetails/`. The application entry point keeps the production `MealAPIClient` and `SeafoodListViewModel` in `@State` so scene updates reuse the same instances. Debug scenarios are in `Source/Application/SeafoodScenarios.swift`; they use the same screen and ViewModel as the live application.
+The production app keeps `MealAPIClient` and `SeafoodListViewModel` in `@State` at the application entry point so scene updates reuse the same instances. Debug scenarios live in `Source/Application/SeafoodScenarios.swift` and mount the same feature views with deterministic services for UI testing.
 
 ## Observation and identity
 
-`SeafoodList` owns its `@MainActor @Observable` ViewModel in private `@State`. SwiftUI reconnects that state storage when it recreates a view value with the same identity. Initializers only assign dependencies; HTTP work begins in a view task.
+`SeafoodList` owns its `@MainActor @Observable` ViewModel in private `@State`. SwiftUI can recreate view values while reconnecting the same state storage, so initializers only assign dependencies and network work starts from view tasks.
 
-`SeafoodListViewModel` imports Observation and has no SwiftUI dependency. Its state is externally read-only. The service and internal completion signals are implementation details; only screen state drives rendering.
+`SeafoodListViewModel` imports Observation but not SwiftUI. Its state is externally read-only, and rendering is driven only by screen state. The service dependency and completion coordination are implementation details.
 
-Each row uses `idMeal` from the server and pushes a detail screen with `NavigationLink`. The List remains in the same structural position as loading, error, and content change. Refresh updates its collection without assigning a new identity to the List. Existing content remains visible until a successful replacement arrives. The production `MealAPIClient` is passed into `SeafoodList` so the destination can create `SeafoodDetailView` without assembling HTTP in `body`.
+Rows use `idMeal` from the server and navigate with `NavigationLink`. The list stays in the same structural position as loading, error, content, and refresh states change, which keeps view identity stable while requests are cancelled, retried, or refreshed.
 
 ## State transitions
 
@@ -60,58 +68,52 @@ enum SeafoodListState {
 }
 ```
 
-A successful empty response is `loaded([])`. Refresh state is nested inside loaded content, so an initial failure cannot coexist with an active refresh.
+A successful empty response is represented as `loaded([])`. Refresh state is nested inside loaded content, so an initial failure cannot coexist with an active refresh.
 
 | Operation | Success | Failure | Cancellation |
 | --- | --- | --- | --- |
 | Initial load / initial retry | Replace with loaded content | Show error and retry | Restore idle |
 | Refresh / refresh retry | Replace content and clear refresh error | Preserve content and show retry | Preserve content and clear refresh activity |
 
-Automatic appearance loads from idle. Loaded content, including an empty collection, does not trigger another request. A displayed failure requires explicit retry. Background/foreground transitions do not initiate fetching.
-
-Tapping a row loads `lookup.php?i=` on a new `SeafoodDetailViewModel`. That screen uses idle / loading / failed / loaded only. There is no pull-to-refresh and no completion-waiter queue: SwiftUI cancels the view `.task` on pop, and a later push creates a new ViewModel. Retry uses the same `.task(id:)` one-shot pattern as the list. A successful lookup is not refetched on a later `.task` run with the same identity.
-
-The list search field filters already loaded names locally (`localizedStandardContains`). It does not call the API. An empty filter result is distinct from an empty network response.
+Automatic appearance loads only from idle. Loaded content, including an empty collection, does not refetch on later appearances. A displayed failure requires explicit retry. Local search filters already loaded names with `localizedStandardContains` and never calls the API.
 
 ## Task ownership and cancellation
 
 ### Initial load and retry
 
-A `.task(id:)` modifier on the stable List awaits the ViewModel directly, which in turn awaits the service. These calls execute within the calling task. SwiftUI owns that task and cancels it when the screen is removed.
+A `.task(id:)` modifier awaits the ViewModel directly. The ViewModel awaits the service in the same task, so SwiftUI remains the owner of work tied to screen lifetime.
 
-The task identifier changes only when the user presses retry. A separate one-shot retry intent distinguishes that action from subsequent appearances with the same identifier. State changes during loading do not change task identity.
+Retry changes the task identifier through a one-shot intent. State changes during loading do not change task identity or start duplicate requests.
 
 ### Pull-to-refresh
 
-`.refreshable` awaits the full refresh so the system spinner follows its lifetime. Its documentation does not promise the same removal cancellation behavior as `.task`.
+`.refreshable` awaits the full refresh so the system spinner follows its lifetime. Because disappearance cancellation is not modeled as explicitly as `.task`, the view owns one bounded refresh `Task`, forwards caller cancellation with `withTaskCancellationHandler`, and cancels the task in `onDisappear`.
 
-To make disappearance cancellation explicit, the view owns one refresh Task. It awaits that Task, forwards cancellation from the caller with `withTaskCancellationHandler`, and cancels it in `onDisappear`. Cleanup clears only the matching handle. This is a deliberately bounded unstructured task at the UI boundary; the ViewModel stores no task handles.
+The ViewModel deliberately stores no task handles. It models state and request admission; the SwiftUI boundary owns UI-triggered task lifetime.
 
 ### One request at a time
 
-The ViewModel sets loading state on MainActor before awaiting the service. Another explicit refresh or retry while loading returns without starting more work. The operation restores its final state and releases completion waiters without an intervening suspension.
+The ViewModel sets loading state on `MainActor` before awaiting the service. Another refresh or retry while loading returns without starting parallel work.
 
-A rapid reappearance can arrive before a cancelled request finishes. `loadIfNeeded()` waits for the current operation to settle using checked continuations, then rechecks state. Resuming those continuations signals completion. Cancelling a waiting appearance resumes its wait without cancelling the request owned by another caller. This prevents a new appearance from observing loading, returning early, and leaving the screen idle after the previous request finally cancels.
+A rapid reappearance can happen before a cancelled request finishes. `loadIfNeeded()` waits for the in-flight operation to settle with checked continuations, then rechecks state. A cancelled waiting appearance resumes its own wait without cancelling work owned by another caller.
 
-Cancellation is checked before admitting work and before publishing a result. The client also checks before the request, after the network response, and after decoding. A dependency that returns success despite cancellation cannot publish that result. Cancellation takes precedence over presenting a late error.
-
-MainActor protects access to state, but an async method can interleave with another caller at an await. Request admission and post-await state changes therefore have explicit rules.
+Cancellation is checked before admitting work and before publishing results. The API client also checks before the request, after the network response, and after decoding. Cancellation wins over late success and late error.
 
 ## Execution and isolation
 
-`MealAPIClient.fetchMeals()` and `fetchMeal(id:)` are `@concurrent`. They share HTTP validation and error mapping. They run preparation and JSON decoding outside the caller's actor while remaining in the same task. The immutable client and model are Sendable; decoded types and the service contract have explicit nonisolated declarations. Each request owns its JSONDecoder.
+`MealAPIClient.fetchMeals()` and `fetchMeal(id:)` are `@concurrent`. They move URL preparation and synchronous JSON decoding away from the caller's actor while staying inside the same task and preserving cancellation context.
 
-URLSession suspends during network I/O. The reason for the explicit executor change is the synchronous decoding work. `@concurrent` does not create a Task and does not discard cancellation context. With Approachable Concurrency, a nonisolated async declaration alone would not express this executor change.
+The client validates HTTP before decoding the success payload. For the category filter, `meals: null` and an empty array are valid empty results; a missing `meals` field is a decoding failure. For lookup, `null` or an empty array maps to `MealAPIError.notFound`.
 
-The client validates HTTP before decoding the success payload. For the category filter, `meals: null` and an empty array are valid empty results; a missing `meals` field is a decoding failure. For lookup, `null` or an empty array is `MealAPIError.notFound`. Typed `MealAPIError` preserves underlying transport/decoding errors and HTTP status for diagnosis. Cancellation is a separate case and is never shown as a screen failure.
+Typed `MealAPIError` keeps transport, HTTP, decoding, not-found, and cancellation cases separate. Cancellation is never displayed as a screen failure.
 
 ## Verification
 
-Swift Testing exercises the client through an injected ephemeral URLSession and test URLProtocol. Per-session fixture IDs isolate parallel tests; a Mutex protects the registry accessed by synchronous Foundation callbacks. Tests cover request shape, decoding, null/empty/missing payloads, HTTP errors, underlying transport errors, and cancellation reaching `URLProtocol.stopLoading()`.
+Swift Testing exercises `MealAPIClient` through an injected ephemeral `URLSession` and test `URLProtocol`. Tests cover request shape, decoding, null/empty/missing payloads, HTTP errors, transport errors, and cancellation reaching `URLProtocol.stopLoading()`.
 
-ViewModel tests use a controlled actor service that announces each request and waits for the test to provide a result. It deliberately permits a response after cancellation. Assertions cover state transitions, admission of overlapping calls, preservation of content, cancelled waiters, and rapid reentry. There are no timing sleeps or polling loops.
+ViewModel tests use a controlled actor service that announces each request and waits for the test to provide a result. This makes async behavior deterministic without sleeps or polling loops. Assertions cover state transitions, overlapping call admission, content preservation, cancelled waiters, and rapid reentry.
 
-XCTest UI tests exercise scrolling, pull-to-refresh, empty results, retry, failed refresh, and opening a recipe from the list. The Debug lifecycle host mounts/unmounts the actual SeafoodList while retaining its ViewModel and withholding service responses. It checks both cancellation paths, a return before cancellation settles, and parent updates preserving view identity. The initial-load host intentionally reports cancellation before a test explicitly completes the pending response. The refresh host unmounts the screen as soon as refresh starts and completes the cancelled request, allowing XCTest to finish the gesture. The failed-refresh fixture remains unavailable until the test explicitly restores the service, so recovery does not depend on the number of callbacks emitted by a gesture. Detail fixtures return a canned recipe for the selected row id.
+XCTest UI tests run against Debug scenarios that mount the real SwiftUI screens with deterministic services. They cover scrolling, pull-to-refresh, empty results, retry, failed refresh, detail navigation, lifecycle cancellation, and parent updates preserving view identity.
 
 To select a deterministic scenario, add launch arguments in the scheme:
 
@@ -124,13 +126,26 @@ To select a deterministic scenario, add launch arguments in the scheme:
 --seafood-scenario refreshLifecycle
 ```
 
-Fixtures use local placeholders for images. Hosted unit tests select an offline scenario through the XCTest launch environment. Scenario code is compiled only in Debug. A normal launch uses the real API.
+Scenario code is compiled only in Debug. A normal launch uses the real API.
 
 ## Scope and limitations
 
-The API test key `1` is intended for development and educational use. There is no remote search, pagination, persistence, video player, or custom image cache. AsyncImage handles individual thumbnails independently of list and lookup requests. The list is a small native List with Dynamic Type, VoiceOver labels, and system light/dark appearance.
+The API test key `1` is intended for development and educational use. The app has no remote search, pagination, persistence, video player, custom image cache, or offline mode. `AsyncImage` handles thumbnails independently of list and lookup requests.
+
+The UI is a small native `List` and detail screen with Dynamic Type, VoiceOver labels, and system light/dark appearance. The project is intentionally scoped around concurrency behavior, not product completeness.
 
 The Xcode toolchain can emit an AppIntents metadata extraction warning for targets that do not link AppIntents. Swift compiler warnings are treated as errors; the app does not add an unused AppIntents dependency to hide toolchain output.
+
+## Tradeoffs
+
+Several rough edges are deliberate because they keep the project focused on Swift Concurrency rather than turning it into a broader product exercise:
+
+- User-facing strings are mostly hardcoded in views instead of being fully wired through localization.
+- Loaded state is not persisted across app launches; the app demonstrates task lifecycle, not caching or restoration.
+- There is no design system, custom component library, or visual polish layer beyond native SwiftUI controls.
+- Networking is intentionally small: no request retry policy, auth layer, pagination abstraction, or image pipeline.
+- Dependency injection is explicit and local to the feature instead of using a container.
+- Debug scenarios are test fixtures, not a general mocking framework.
 
 ## References
 
@@ -142,4 +157,4 @@ The Xcode toolchain can emit an AppIntents metadata extraction warning for targe
 
 ## License
 
-MIT — see LICENSE.
+MIT - see LICENSE.
