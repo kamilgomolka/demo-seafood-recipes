@@ -14,13 +14,21 @@ struct MealsView: View {
         List(viewModel.meals) { meal in
             HStack(spacing: 16) {
                 AsyncImage(url: meal.thumbnailURL) { phase in
-                    if let image = phase.image {
+                    switch phase {
+                    case .success(let image):
                         image.resizable().scaledToFill()
-                    } else {
+                    case .failure:
+                        Image(systemName: "exclamationmark.triangle")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .foregroundStyle(.secondary)
+                            .background(.quaternary)
+                    case .empty:
                         Image(systemName: "fork.knife")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .foregroundStyle(.secondary)
                             .background(.quaternary)
+                    @unknown default:
+                        Color.clear
                     }
                 }
                 .frame(width: 64, height: 64)

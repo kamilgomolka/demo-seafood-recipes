@@ -26,7 +26,7 @@ final class MealsViewModel {
     private(set) var state: MealsState = .idle
 
     private let service: any MealService
-    @ObservationIgnored private var completionWaiters: [AsyncStream<Void>.Continuation] = []
+    @ObservationIgnored private var completionWaiters: [CheckedContinuation<Void, Never>] = []
 
     init(service: any MealService) {
         self.service = service
@@ -39,9 +39,20 @@ final class MealsViewModel {
 
     func loadIfNeeded() async {
         while state.isLoading {
-            let (completion, continuation) = AsyncStream<Void>.makeStream()
-            completionWaiters.append(continuation)
-            for await _ in completion {}
+            guard !Task.isCancelled else { return }
+            await withTaskCancellationHandler {
+                await withCheckedContinuation { continuation in
+                    if Task.isCancelled {
+                        continuation.resume()
+                        return
+                    }
+                    completionWaiters.append(continuation)
+                }
+            } onCancel: {
+                Task { @MainActor in
+                    self.resumeCompletionWaiters()
+                }
+            }
             guard !Task.isCancelled else { return }
         }
         guard case .idle = state else { return }
@@ -61,10 +72,7 @@ final class MealsViewModel {
         }
 
         defer {
-            for waiter in completionWaiters {
-                waiter.finish()
-            }
-            completionWaiters.removeAll()
+            resumeCompletionWaiters()
         }
 
         do {
@@ -88,6 +96,14 @@ final class MealsViewModel {
             } else {
                 state = .failed(error)
             }
+        }
+    }
+
+    private func resumeCompletionWaiters() {
+        let waiters = completionWaiters
+        completionWaiters.removeAll()
+        for waiter in waiters {
+            waiter.resume()
         }
     }
 

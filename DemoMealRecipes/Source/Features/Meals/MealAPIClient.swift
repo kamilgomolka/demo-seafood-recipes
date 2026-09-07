@@ -36,12 +36,7 @@ nonisolated struct MealAPIClient: MealService {
     func fetchMeals() async throws(MealAPIError) -> [Meal] {
         do {
             try Task.checkCancellation()
-            var components = URLComponents()
-            components.scheme = "https"
-            components.host = "www.themealdb.com"
-            components.path = "/api/json/v1/1/filter.php"
-            components.queryItems = [URLQueryItem(name: "c", value: "Seafood")]
-            guard let url = components.url else {
+            guard let url = URL(string: "https://www.themealdb.com/api/json/v1/1/filter.php?c=Seafood") else {
                 throw MealAPIError.invalidResponse
             }
 

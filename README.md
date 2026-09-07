@@ -29,7 +29,7 @@ The default destination is iPhone 17 Pro. Override it with `SIMULATOR='device na
 | `MealAPIClient` | URLSession, HTTP validation, decoding, and error classification |
 | `Meal` | Immutable, Sendable row with an API-provided identity |
 
-The feature is in `DemoMealRecipes/Source/Features/Meals/`. The application entry point assembles dependencies. Debug scenarios are in `Source/Application/MealScenarios.swift`; they use the same screen and ViewModel as the live application.
+The feature is in `DemoMealRecipes/Source/Features/Meals/`. The application entry point keeps the production `MealAPIClient` and `MealsViewModel` in `@State` so scene updates reuse the same instances. Debug scenarios are in `Source/Application/MealScenarios.swift`; they use the same screen and ViewModel as the live application. The implementation plan is in `docs/implementation_plan.md`.
 
 ## Observation and identity
 
@@ -83,7 +83,7 @@ To make disappearance cancellation explicit, the view owns one refresh Task. It 
 
 The ViewModel sets loading state on MainActor before awaiting the service. Another explicit refresh or retry while loading returns without starting more work. The operation restores its final state and releases completion waiters without an intervening suspension.
 
-A rapid reappearance can arrive before a cancelled request finishes. `loadIfNeeded()` waits for the current operation to settle using a local AsyncStream completion signal, then rechecks state. Finishing the stream signals completion; no values are sent. Cancelling a waiting appearance ends its wait without cancelling the request owned by another caller. This prevents a new appearance from observing loading, returning early, and leaving the screen idle after the previous request finally cancels.
+A rapid reappearance can arrive before a cancelled request finishes. `loadIfNeeded()` waits for the current operation to settle using checked continuations, then rechecks state. Resuming those continuations signals completion. Cancelling a waiting appearance resumes its wait without cancelling the request owned by another caller. This prevents a new appearance from observing loading, returning early, and leaving the screen idle after the previous request finally cancels.
 
 Cancellation is checked before admitting work and before publishing a result. The client also checks before the request, after the network response, and after decoding. A dependency that returns success despite cancellation cannot publish that result. Cancellation takes precedence over presenting a late error.
 
