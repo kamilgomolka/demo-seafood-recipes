@@ -1,36 +1,5 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "Body Label" : {
-
-    },
-    "Launch Sample Feature" : {
-
-    },
-    "mainScreenTitle" : {
-      "comment" : "Navigation title of the root screen listing the available demos.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Template app"
-          }
-        }
-      }
-    },
-    "sampleFeatureTitle" : {
-      "comment" : "Navigation title of the placeholder feature screen.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sample Feature"
-          }
-        }
-      }
-    }
-  },
-  "version" : "1.2"
+  "sourceLanguage": "en",
+  "strings": {},
+  "version": "1.2"
 }

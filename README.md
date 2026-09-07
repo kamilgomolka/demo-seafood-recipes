@@ -1,119 +1,137 @@
-# [Demo Name]
+# Meal Recipes
 
-[![CI](https://github.com/kamilgomolka/<repo-name>/actions/workflows/ci.yml/badge.svg)](https://github.com/kamilgomolka/<repo-name>/actions/workflows/ci.yml)
-[![Swift](https://img.shields.io/badge/Swift-6.0-F05138.svg)](https://swift.org)
-[![Platform](https://img.shields.io/badge/iOS-26.0%2B-000000.svg)](https://developer.apple.com/ios/)
-[![Xcode](https://img.shields.io/badge/Xcode-26-1575F9.svg)](https://developer.apple.com/xcode/)
-[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
+An iPhone demo of SwiftUI state, view identity, and cooperative cancellation using a real HTTP API. It displays Seafood recipes from [TheMealDB](https://www.themealdb.com/documentation), with initial loading, pull-to-refresh, empty results, and retry.
 
-<!-- Replace <repo-name> in the CI badge above, then delete this line once the sections below are filled in. -->
+## Run
 
-<!-- One or two sentences: what this demo explores and why (e.g. the WWDC session, article, or interview prompt it's based on — link the source material if there is one). Mention target platform(s) if not "iPhone + iPad" (e.g. "iPad only"). -->
+- Xcode 26 with Swift 6.2 or newer; verified toolchain: Xcode 26.6 / Swift 6.3.3.
+- Swift 6 language mode, complete concurrency checking, MainActor default isolation, and Approachable Concurrency.
+- iOS 26.0+, iPhone portrait. No third-party dependencies.
 
-## What It Shows
+Open `DemoMealRecipes.xcodeproj` and run the `DemoMealRecipes` scheme. Simulator builds do not require signing. For a device, copy `Config/Local.xcconfig.example` to the untracked `Config/Local.xcconfig` and set your development team.
 
-<!--
-One bullet per notable API/technique/pattern this demo showcases, e.g.:
+```sh
+make build
+make test
+make lint
+```
 
-- `UITabBarController.mode = .tabSidebar` — floating tab bar, collapsible sidebar
-
-If the app has more than one independent screen reachable from the root menu, use a table instead:
-
-| Demo | What it shows | Key API |
-| --- | --- | --- |
-| ... | ... | ... |
--->
-
-## Screenshots / Recordings
-
-<!--
-Drag a screenshot or screen recording into a GitHub PR/issue comment (or the editor toolbar when editing this file on GitHub) to get a hosted URL, then embed it below:
-
-<img width="400" alt="Description" src="https://github.com/user-attachments/assets/..." />
-https://github.com/user-attachments/assets/...
--->
+The default destination is iPhone 17 Pro. Override it with `SIMULATOR='device name'`. The existing build phase runs `swift-format` in place before compilation.
 
 ## Architecture
 
-Plain SwiftUI — no UIKit app lifecycle, no Storyboards/XIBs, no third-party dependencies. One `View` per feature under `Source/Features/`, pushed from `MainView` onto a `NavigationStack` in `App`.
+| Type | Responsibility |
+| --- | --- |
+| `MealsView` | List, presentation, gestures, and ownership of work tied to the screen |
+| `MealsViewModel` | Observable state, admission of requests, and state transitions |
+| `MealsState` | Initial loading/failure and loaded content with its refresh state |
+| `MealService` | One asynchronous, typed-throwing operation; injection boundary for tests |
+| `MealAPIClient` | URLSession, HTTP validation, decoding, and error classification |
+| `Meal` | Immutable, Sendable row with an API-provided identity |
 
-<!-- State the specific pattern this demo uses if it's not plain MVC (MVVM, coordinator, etc.), and why. -->
+The feature is in `DemoMealRecipes/Source/Features/Meals/`. The application entry point assembles dependencies. Debug scenarios are in `Source/Application/MealScenarios.swift`; they use the same screen and ViewModel as the live application.
 
-```
-Config/                                     # Project and target configuration, kept out of the Xcode UI
-├── Local.xcconfig.example                  # Template for the untracked Local.xcconfig (Team ID)
-├── Project/
-│   ├── ProjectBase.xcconfig                # Platform, Swift language mode and strictness, signing style
-│   ├── ProjectDebug.xcconfig               # Warnings-as-errors
-│   └── ProjectRelease.xcconfig
-└── Target/
-    ├── TargetBase.xcconfig                 # Versioning, product name, bundle identifier, actor isolation
-    ├── TargetDemoMealRecipes.xcconfig         # App: generated Info.plist keys, asset catalog names
-    ├── TargetDemoMealRecipesTests.xcconfig
-    └── TargetDemoMealRecipesUITests.xcconfig
+## Observation and identity
 
-DemoMealRecipes/
-├── Source/
-│   ├── Application/
-│   │   └── App.swift                       # `@main` SwiftUI App, `WindowGroup` + `NavigationStack`
-│   ├── MainView.swift                      # Entry point: one button per feature
-│   └── Features/
-│       └── ...                             # One folder/file per feature demo
-└── SupportingFiles/
-    ├── Assets.xcassets
-    └── Localizable.xcstrings
-```
+`MealsView` owns its `@MainActor @Observable` ViewModel in private `@State`. SwiftUI reconnects that state storage when it recreates a view value with the same identity. Initializers only assign dependencies; HTTP work begins in a view task.
 
-Xcode's own default warning flags still live in `project.pbxproj`; everything this project decides for itself lives in `Config/`.
+`MealsViewModel` imports Observation and has no SwiftUI dependency. Its state is externally read-only. The service and internal completion signals are implementation details; only screen state drives rendering.
 
-## Trade-offs & Production Notes
+Each row uses `idMeal` from the server. The List remains in the same structural position as loading, error, and content change. Refresh updates its collection without assigning a new identity to the List. Existing content remains visible until a successful replacement arrives.
 
-<!-- Replace or extend the template-level notes below with ones specific to this demo. This is where deliberate omissions belong, so a reader can tell a shortcut from an oversight. -->
+## State transitions
 
-- **iOS 26 only.** The deployment target tracks the newest SDK so demos can use current APIs without availability checks. A shipping app would support at least two major versions back.
-- **No coordinator, router, or dependency injection.** Features are pushed directly by `NavigationLink` from `MainView`. At production scale this becomes a navigation abstraction with injected dependencies; at demo scale it would be indirection without a payoff.
-- **Localization is wired up, not completed.** Screen titles go through `Localizable.xcstrings` so the string catalog and its generated symbols stay exercised; incidental demo copy is inlined.
-- **Test coverage is a smoke layer, not a safety net.** A unit test that the SwiftUI view graph builds, plus UI tests that launch the app and open the sample feature. Enough to keep CI honest about the app actually starting.
+```swift
+enum MealsState {
+    case idle
+    case loading
+    case failed(MealAPIError)
+    case loaded([Meal], refresh: RefreshState)
 
-## Requirements
-
-- Xcode 26 or later
-- iOS 26.0+ (`IPHONEOS_DEPLOYMENT_TARGET`)
-- Swift 6 language mode, strict concurrency, strict memory safety, `MainActor` default isolation
-
-## Getting Started
-
-```bash
-git clone https://github.com/kamilgomolka/<repo-name>.git
-cd <repo-name>
-open DemoMealRecipes.xcodeproj
+    enum RefreshState {
+        case idle
+        case refreshing
+        case failed(MealAPIError)
+    }
+}
 ```
 
-Build and run the `DemoMealRecipes` scheme on an iOS 26+ Simulator. Signing is not required for the Simulator. To run on a device, copy the local configuration template and fill in your Apple Developer Team ID:
+A successful empty response is `loaded([])`. Refresh state is nested inside loaded content, so an initial failure cannot coexist with an active refresh.
 
-```bash
-cp Config/Local.xcconfig.example Config/Local.xcconfig
+| Operation | Success | Failure | Cancellation |
+| --- | --- | --- | --- |
+| Initial load / initial retry | Replace with loaded content | Show error and retry | Restore idle |
+| Refresh / refresh retry | Replace content and clear refresh error | Preserve content and show retry | Preserve content and clear refresh activity |
+
+Automatic appearance loads from idle. Loaded content, including an empty collection, does not trigger another request. A displayed failure requires explicit retry. Background/foreground transitions do not initiate fetching.
+
+## Task ownership and cancellation
+
+### Initial load and retry
+
+A `.task(id:)` modifier on the stable List awaits the ViewModel directly, which in turn awaits the service. These calls execute within the calling task. SwiftUI owns that task and cancels it when the screen is removed.
+
+The task identifier changes only when the user presses retry. A separate one-shot retry intent distinguishes that action from subsequent appearances with the same identifier. State changes during loading do not change task identity.
+
+### Pull-to-refresh
+
+`.refreshable` awaits the full refresh so the system spinner follows its lifetime. Its documentation does not promise the same removal cancellation behavior as `.task`.
+
+To make disappearance cancellation explicit, the view owns one refresh Task. It awaits that Task, forwards cancellation from the caller with `withTaskCancellationHandler`, and cancels it in `onDisappear`. Cleanup clears only the matching handle. This is a deliberately bounded unstructured task at the UI boundary; the ViewModel stores no task handles.
+
+### One request at a time
+
+The ViewModel sets loading state on MainActor before awaiting the service. Another explicit refresh or retry while loading returns without starting more work. The operation restores its final state and releases completion waiters without an intervening suspension.
+
+A rapid reappearance can arrive before a cancelled request finishes. `loadIfNeeded()` waits for the current operation to settle using a local AsyncStream completion signal, then rechecks state. Finishing the stream signals completion; no values are sent. Cancelling a waiting appearance ends its wait without cancelling the request owned by another caller. This prevents a new appearance from observing loading, returning early, and leaving the screen idle after the previous request finally cancels.
+
+Cancellation is checked before admitting work and before publishing a result. The client also checks before the request, after the network response, and after decoding. A dependency that returns success despite cancellation cannot publish that result. Cancellation takes precedence over presenting a late error.
+
+MainActor protects access to state, but an async method can interleave with another caller at an await. Request admission and post-await state changes therefore have explicit rules.
+
+## Execution and isolation
+
+`MealAPIClient.fetchMeals()` is `@concurrent`. It runs preparation and JSON decoding outside the caller's actor while remaining in the same task. The immutable client and model are Sendable; decoded types and the service contract have explicit nonisolated declarations. Each request owns its JSONDecoder.
+
+URLSession suspends during network I/O. The reason for the explicit executor change is the synchronous decoding work. `@concurrent` does not create a Task and does not discard cancellation context. With Approachable Concurrency, a nonisolated async declaration alone would not express this executor change.
+
+The client validates HTTP before decoding the success payload. `meals: null` and an empty array are valid empty results; a missing `meals` field is a decoding failure. Typed `MealAPIError` preserves underlying transport/decoding errors and HTTP status for diagnosis. Cancellation is a separate case and is never shown as a screen failure.
+
+## Verification
+
+Swift Testing exercises the client through an injected ephemeral URLSession and test URLProtocol. Per-session fixture IDs isolate parallel tests; a Mutex protects the registry accessed by synchronous Foundation callbacks. Tests cover request shape, decoding, null/empty/missing payloads, HTTP errors, underlying transport errors, and cancellation reaching `URLProtocol.stopLoading()`.
+
+ViewModel tests use a controlled actor service that announces each request and waits for the test to provide a result. It deliberately permits a response after cancellation. Assertions cover state transitions, admission of overlapping calls, preservation of content, cancelled waiters, and rapid reentry. There are no timing sleeps or polling loops.
+
+XCTest UI tests exercise scrolling, pull-to-refresh, empty results, retry, and failed refresh. The Debug lifecycle host mounts/unmounts the actual MealsView while retaining its ViewModel and withholding service responses. It checks both cancellation paths, a return before cancellation settles, and parent updates preserving view identity. The initial-load host intentionally reports cancellation before a test explicitly completes the pending response. The refresh host unmounts the screen as soon as refresh starts and completes the cancelled request, allowing XCTest to finish the gesture. The failed-refresh fixture remains unavailable until the test explicitly restores the service, so recovery does not depend on the number of callbacks emitted by a gesture.
+
+To select a deterministic scenario, add launch arguments in the scheme:
+
+```text
+--meal-scenario success
+--meal-scenario failure
+--meal-scenario empty
+--meal-scenario refreshFailure
+--meal-scenario lifecycle
+--meal-scenario refreshLifecycle
 ```
 
-`Config/Local.xcconfig` is untracked, so no Team ID ever lands in version control.
+Fixtures use local placeholders for images. Hosted unit tests select an offline scenario through the XCTest launch environment. Scenario code is compiled only in Debug. A normal launch uses the real API.
 
-## Tooling
+## Scope and limitations
 
-```bash
-make build         # compile for the Simulator
-make format        # apply swift-format in place
-make destinations  # list available Simulator destinations
-```
+The API test key `1` is intended for development and educational use. There are no details, search, pagination, persistence, or custom image cache. AsyncImage handles individual thumbnails independently of the list request. The initial screen is intentionally a small native List with Dynamic Type, VoiceOver labels, and system light/dark appearance.
 
-`swift-format` ships with the Xcode toolchain, so there is nothing to install.
-Automation: Command `make format` is configured as a Run Script build phase (before Compile Sources), so every build formats sources in place.
+The Xcode toolchain can emit an AppIntents metadata extraction warning for targets that do not link AppIntents. Swift compiler warnings are treated as errors; the app does not add an unused AppIntents dependency to hide toolchain output.
 
-Override the Simulator with `make build SIMULATOR='iPhone 17 Pro'`.
+## References
 
-## Built with an Agentic Workflow
-
-This repository doubles as an experiment in AI-assisted development. The specification, architectural decisions, code review, and verification are mine; [Cursor](https://cursor.com/) executes against them in a **Plan > Review > Implement > Review** loop. Nothing lands without passing the review step and a green CI run.
+- [SwiftUI model ownership and Observation](https://developer.apple.com/documentation/swiftui/managing-model-data-in-your-app)
+- [SwiftUI view tasks](https://developer.apple.com/documentation/swiftui/view/task(name:priority:file:line:_:))
+- [SwiftUI refreshable](https://developer.apple.com/documentation/swiftui/view/refreshable(action:))
+- [SE-0304: Structured concurrency](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0304-structured-concurrency.md)
+- [SE-0461: Async function isolation and @concurrent](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0461-async-function-isolation.md)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see LICENSE.
