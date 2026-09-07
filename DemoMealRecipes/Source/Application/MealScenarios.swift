@@ -40,25 +40,17 @@
         func fetchMeals() async throws(MealAPIError) -> [Meal] {
             guard !Task.isCancelled else { throw .cancelled }
             requestCount += 1
+
             switch scenario {
-            case .failure where requestCount == 1, .refreshFailure where requestCount > 1 && !hasRecovered:
+            case .failure where requestCount == 1,
+                .refreshFailure where requestCount > 1 && !hasRecovered:
                 throw .httpStatus(503)
             case .empty where requestCount == 1:
                 return []
-            case .lifecycle, .refreshLifecycle:
-                if scenario == .refreshLifecycle, requestCount != 2 {
-                    return Self.meals(batch: requestCount)
-                }
-                return await withTaskCancellationHandler {
-                    await withCheckedContinuation { pending = $0 }
-                } onCancel: { [weak self] in
-                    Task { @MainActor [weak self] in
-                        self?.cancellationCount += 1
-                        if self?.scenario == .refreshLifecycle {
-                            self?.completePendingRequest()
-                        }
-                    }
-                }
+            case .lifecycle:
+                return await waitForCompletion()
+            case .refreshLifecycle where requestCount == 2:
+                return await waitForCompletion()
             default:
                 return Self.meals(batch: requestCount)
             }
@@ -79,11 +71,23 @@
             hasRecovered = true
         }
 
+        private func waitForCompletion() async -> [Meal] {
+            await withTaskCancellationHandler {
+                await withCheckedContinuation { pending = $0 }
+            } onCancel: { [weak self] in
+                Task { @MainActor [weak self] in
+                    self?.cancellationCount += 1
+                    if self?.scenario == .refreshLifecycle {
+                        self?.completePendingRequest()
+                    }
+                }
+            }
+        }
+
         private static func meals(batch: Int) -> [Meal] {
-            (1...30).map { index in
-                Meal(
-                    id: String(index), name: "\(batch == 1 ? "Original" : "Updated") seafood \(index)",
-                    thumbnailURL: nil)
+            let prefix = batch == 1 ? "Original" : "Updated"
+            return (1...30).map { index in
+                Meal(id: String(index), name: "\(prefix) seafood \(index)", thumbnailURL: nil)
             }
         }
 

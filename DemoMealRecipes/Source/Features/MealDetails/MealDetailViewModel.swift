@@ -40,15 +40,7 @@ final class MealDetailViewModel {
             }
             state = .loaded(details)
         } catch {
-            if Task.isCancelled {
-                state = .idle
-                return
-            }
-            if case .cancelled = error {
-                state = .idle
-                return
-            }
-            state = .failed(error)
+            state = (Task.isCancelled || error.isCancelled) ? .idle : .failed(error)
         }
     }
 }

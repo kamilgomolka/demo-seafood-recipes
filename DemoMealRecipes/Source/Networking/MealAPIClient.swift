@@ -13,6 +13,10 @@ nonisolated enum MealAPIError: Error {
     case notFound
     case cancelled
 
+    var isCancelled: Bool {
+        if case .cancelled = self { true } else { false }
+    }
+
     var message: String {
         switch self {
         case .transport:
@@ -30,6 +34,9 @@ nonisolated enum MealAPIError: Error {
 }
 
 nonisolated struct MealAPIClient: MealService {
+    private static let filterURL = "https://www.themealdb.com/api/json/v1/1/filter.php?c=Seafood"
+    private static let lookupURL = "https://www.themealdb.com/api/json/v1/1/lookup.php?i="
+
     private let session: URLSession
 
     init(session: URLSession = .shared) {
@@ -38,42 +45,34 @@ nonisolated struct MealAPIClient: MealService {
 
     @concurrent
     func fetchMeals() async throws(MealAPIError) -> [Meal] {
-        guard let url = URL(string: "https://www.themealdb.com/api/json/v1/1/filter.php?c=Seafood") else {
-            throw MealAPIError.invalidResponse
-        }
-        let body = try await loadData(from: url)
-        let meals: [Meal]
-        do {
-            meals = try JSONDecoder().decode(MealsResponse.self, from: body).meals
-        } catch {
-            throw MealAPIError.decoding(error)
-        }
-        if Task.isCancelled {
-            throw MealAPIError.cancelled
-        }
+        let meals = try await decode(MealsResponse.self, from: Self.filterURL).meals
+        try throwIfCancelled()
         return meals
     }
 
     @concurrent
     func fetchMeal(id: String) async throws(MealAPIError) -> MealDetails {
         let encodedID = id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id
-        guard let url = URL(string: "https://www.themealdb.com/api/json/v1/1/lookup.php?i=\(encodedID)") else {
-            throw MealAPIError.invalidResponse
-        }
-        let body = try await loadData(from: url)
-        let meals: [LookupMeal]
-        do {
-            meals = try JSONDecoder().decode(LookupResponse.self, from: body).meals ?? []
-        } catch {
-            throw MealAPIError.decoding(error)
-        }
-        if Task.isCancelled {
-            throw MealAPIError.cancelled
-        }
-        guard let meal = meals.first else {
-            throw MealAPIError.notFound
-        }
+        let meals = try await decode(LookupResponse.self, from: Self.lookupURL + encodedID).meals ?? []
+        try throwIfCancelled()
+        guard let meal = meals.first else { throw MealAPIError.notFound }
         return meal.details
+    }
+
+    private func decode<Value: Decodable>(_ type: Value.Type, from urlString: String) async throws(MealAPIError)
+        -> Value
+    {
+        guard let url = URL(string: urlString) else { throw MealAPIError.invalidResponse }
+        let body = try await loadData(from: url)
+        do {
+            return try JSONDecoder().decode(type, from: body)
+        } catch {
+            throw .decoding(error)
+        }
+    }
+
+    private func throwIfCancelled() throws(MealAPIError) {
+        if Task.isCancelled { throw .cancelled }
     }
 
     private func loadData(from url: URL) async throws(MealAPIError) -> Data {
@@ -102,9 +101,7 @@ nonisolated struct MealAPIClient: MealService {
     private struct MealsResponse: Decodable {
         let meals: [Meal]
 
-        private enum CodingKeys: String, CodingKey {
-            case meals
-        }
+        private enum CodingKeys: String, CodingKey { case meals }
 
         init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -119,48 +116,37 @@ nonisolated struct MealAPIClient: MealService {
     private struct LookupMeal: Decodable {
         let details: MealDetails
 
-        private struct DynamicCodingKey: CodingKey {
+        private struct Field: CodingKey {
             var stringValue: String
-            init?(stringValue: String) {
-                self.stringValue = stringValue
-            }
             var intValue: Int? { nil }
+            init(_ stringValue: String) { self.stringValue = stringValue }
+            init?(stringValue: String) { self.init(stringValue) }
             init?(intValue: Int) { nil }
         }
 
         init(from decoder: any Decoder) throws {
-            let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+            let container = try decoder.container(keyedBy: Field.self)
             func field(_ name: String) throws -> String? {
-                guard let key = DynamicCodingKey(stringValue: name) else { return nil }
-                return try container.decodeIfPresent(String.self, forKey: key)
+                try container.decodeIfPresent(String.self, forKey: Field(name))
             }
-            guard let idKey = DynamicCodingKey(stringValue: "idMeal"),
-                let nameKey = DynamicCodingKey(stringValue: "strMeal")
-            else {
-                throw DecodingError.dataCorrupted(
-                    .init(codingPath: decoder.codingPath, debugDescription: "Missing meal keys"))
+            func trimmed(_ name: String) throws -> String {
+                try field(name)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             }
-            let id = try container.decode(String.self, forKey: idKey)
-            let name = try container.decode(String.self, forKey: nameKey)
+
             var ingredients: [MealIngredient] = []
             for index in 1...20 {
-                let ingredientName =
-                    try field("strIngredient\(index)")?
-                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                guard !ingredientName.isEmpty else { continue }
-                let measure =
-                    try field("strMeasure\(index)")?
-                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                ingredients.append(MealIngredient(name: ingredientName, measure: measure))
+                let name = try trimmed("strIngredient\(index)")
+                guard !name.isEmpty else { continue }
+                ingredients.append(MealIngredient(name: name, measure: try trimmed("strMeasure\(index)")))
             }
-            let thumbnail = try field("strMealThumb").flatMap(URL.init(string:))
+
             details = MealDetails(
-                id: id,
-                name: name,
+                id: try container.decode(String.self, forKey: Field("idMeal")),
+                name: try container.decode(String.self, forKey: Field("strMeal")),
                 category: try field("strCategory"),
                 area: try field("strArea"),
                 instructions: try field("strInstructions") ?? "",
-                thumbnailURL: thumbnail,
+                thumbnailURL: try field("strMealThumb").flatMap(URL.init(string:)),
                 ingredients: ingredients)
         }
     }

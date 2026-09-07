@@ -9,19 +9,20 @@ struct MealRemoteImage: View {
             case .success(let image):
                 image.resizable().scaledToFill()
             case .failure:
-                Image(systemName: "exclamationmark.triangle")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .foregroundStyle(.secondary)
-                    .background(.quaternary)
+                placeholder("exclamationmark.triangle")
             case .empty:
-                Image(systemName: "fork.knife")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .foregroundStyle(.secondary)
-                    .background(.quaternary)
+                placeholder("fork.knife")
             @unknown default:
                 Color.clear
             }
         }
+    }
+
+    private func placeholder(_ systemName: String) -> some View {
+        Image(systemName: systemName)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .foregroundStyle(.secondary)
+            .background(.quaternary)
     }
 }
 
@@ -91,14 +92,11 @@ struct MealDetailView: View {
                     Text(details.name)
                         .font(.title2)
                         .bold()
-                    if let category = details.category, let area = details.area {
-                        Text("\(category) · \(area)")
-                            .foregroundStyle(.secondary)
-                    } else if let category = details.category {
-                        Text(category)
-                            .foregroundStyle(.secondary)
-                    } else if let area = details.area {
-                        Text(area)
+                    let subtitle = [details.category, details.area]
+                        .compactMap { $0 }
+                        .joined(separator: " · ")
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
                             .foregroundStyle(.secondary)
                     }
                 }

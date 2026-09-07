@@ -18,12 +18,16 @@ struct DemoMealRecipesApp: App {
                     if let scenario = MealScenario.launchScenario {
                         MealScenarioRoot(scenario: scenario)
                     } else {
-                        MealsView(viewModel: viewModel, service: client)
+                        mealsRoot
                     }
                 #else
-                    MealsView(viewModel: viewModel, service: client)
+                    mealsRoot
                 #endif
             }
         }
+    }
+
+    private var mealsRoot: MealsView {
+        MealsView(viewModel: viewModel, service: client)
     }
 }

@@ -104,9 +104,7 @@ struct MealsView: View {
 
     private func refresh() async {
         guard !Task.isCancelled, refreshTask == nil else { return }
-        let task = Task { [viewModel] in
-            await viewModel.reload()
-        }
+        let task = Task { await viewModel.reload() }
         refreshTask = task
         defer {
             if refreshTask == task {

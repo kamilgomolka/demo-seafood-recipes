@@ -47,19 +47,7 @@ final class MealsViewModel {
     func loadIfNeeded() async {
         while state.isLoading {
             guard !Task.isCancelled else { return }
-            await withTaskCancellationHandler {
-                await withCheckedContinuation { continuation in
-                    if Task.isCancelled {
-                        continuation.resume()
-                        return
-                    }
-                    completionWaiters.append(continuation)
-                }
-            } onCancel: {
-                Task { @MainActor in
-                    self.resumeCompletionWaiters()
-                }
-            }
+            await waitForInFlightLoad()
             guard !Task.isCancelled else { return }
         }
         guard case .idle = state else { return }
@@ -78,9 +66,7 @@ final class MealsViewModel {
             state = .loading
         }
 
-        defer {
-            resumeCompletionWaiters()
-        }
+        defer { resumeCompletionWaiters() }
 
         do {
             let meals = try await service.fetchMeals()
@@ -90,15 +76,9 @@ final class MealsViewModel {
             }
             state = .loaded(meals, refresh: .idle)
         } catch {
-            if Task.isCancelled {
+            if Task.isCancelled || error.isCancelled {
                 restoreAfterCancellation(previousMeals: previousMeals)
-                return
-            }
-            if case .cancelled = error {
-                restoreAfterCancellation(previousMeals: previousMeals)
-                return
-            }
-            if let previousMeals {
+            } else if let previousMeals {
                 state = .loaded(previousMeals, refresh: .failed(error))
             } else {
                 state = .failed(error)
@@ -106,12 +86,26 @@ final class MealsViewModel {
         }
     }
 
+    private func waitForInFlightLoad() async {
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                if Task.isCancelled {
+                    continuation.resume()
+                    return
+                }
+                completionWaiters.append(continuation)
+            }
+        } onCancel: {
+            Task { @MainActor in
+                self.resumeCompletionWaiters()
+            }
+        }
+    }
+
     private func resumeCompletionWaiters() {
         let waiters = completionWaiters
         completionWaiters.removeAll()
-        for waiter in waiters {
-            waiter.resume()
-        }
+        waiters.forEach { $0.resume() }
     }
 
     private func restoreAfterCancellation(previousMeals: [Meal]?) {
