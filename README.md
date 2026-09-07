@@ -6,7 +6,9 @@
 [![Xcode](https://img.shields.io/badge/Xcode-26-1575F9.svg)](https://developer.apple.com/xcode/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
 
-An iPhone demo app, with a simple List-Details UI, and a basic networking. The main goal of this project was to exercise good practices around Swift Concurrency (`async`/`await`, actor isolation, Tasks, cooperative cancellation, and unit testing async code). Other aspects of the application are intentionally simplified - it's not a complete product, just a Swift concurrency playground. 
+A small SwiftUI application, with a simple List -> Details Navigation, and a basic networking layer.
+
+**The main goal of this project was to exercise good practices around Swift Concurrency (`async`/`await`, actor isolation, Tasks, cooperative cancellation, and unit testing async code).** Other aspects of the application are intentionally simplified - it's not a complete product, just a Swift concurrency playground. 
 
 The app uses [TheMealDB](https://www.themealdb.com/documentation) to load Seafood recipes, supports initial loading, pull-to-refresh, local name search, empty results, retry, and a recipe detail screen.
 
