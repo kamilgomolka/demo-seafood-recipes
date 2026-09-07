@@ -1,6 +1,5 @@
 # Seafood Recipes
 
-[![CI](https://github.com/kamilgomolka/demo-seafood-recipes/actions/workflows/ci.yml/badge.svg)](https://github.com/kamilgomolka/demo-seafood-recipes/actions/workflows/ci.yml)
 [![Swift](https://img.shields.io/badge/Swift-6.2-F05138.svg)](https://swift.org)
 [![Platform](https://img.shields.io/badge/iOS-26.0%2B-000000.svg)](https://developer.apple.com/ios/)
 [![Xcode](https://img.shields.io/badge/Xcode-26-1575F9.svg)](https://developer.apple.com/xcode/)
@@ -11,6 +10,12 @@ A small SwiftUI application, with a simple List -> Details Navigation, and a bas
 **The main goal of this project was to exercise good practices around Swift Concurrency (`async`/`await`, actor isolation, Tasks, cooperative cancellation, and unit testing async code).** Other aspects of the application are intentionally simplified - it's not a complete product, just a Swift concurrency playground. 
 
 The app uses [TheMealDB](https://www.themealdb.com/documentation) to load Seafood recipes, supports initial loading, pull-to-refresh, local name search, empty results, retry, and a recipe detail screen.
+
+## Screenshots
+
+<img width="406" height="878" alt="Screenshot 2026-09-07 at 20 41 52" src="https://github.com/user-attachments/assets/04efae4c-58fe-41c3-9ca9-ccf4e7f0e815" />
+<img width="406" height="878" alt="Screenshot 2026-09-07 at 20 42 36" src="https://github.com/user-attachments/assets/df1082ce-a50e-4982-bca2-2d4afed9d8ef" />
+<img width="406" height="878" alt="Screenshot 2026-09-07 at 20 42 45" src="https://github.com/user-attachments/assets/36aa51e1-14ec-4ba6-acf0-48b67f7a02d9" />
 
 ## Run
 
