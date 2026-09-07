@@ -1,7 +1,29 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "Couldn't load recipe" : {
+
+    },
     "Couldn't load recipes" : {
+
+    },
+    "Ingredients" : {
+
+    },
+    "Instructions" : {
+
+    },
+    "Loading recipe…" : {
 
     },
     "Loading recipes…" : {

@@ -20,6 +20,15 @@ final class DemoMealRecipesUITests: XCTestCase {
     }
 
     @MainActor
+    func testRecipeDetailOpensFromList() {
+        let app = launch("success")
+        XCTAssertTrue(app.descendants(matching: .any)["meal.1"].firstMatch.waitForExistence(timeout: 5))
+        app.descendants(matching: .any)["meal.1"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Simmer the seafood until cooked through."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Salmon"].exists)
+    }
+
+    @MainActor
     func testFailureCanBeRetried() {
         let app = launch("failure")
         let retry = app.buttons["meals.retry"]

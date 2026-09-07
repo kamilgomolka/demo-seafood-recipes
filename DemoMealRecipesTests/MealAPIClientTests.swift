@@ -21,6 +21,78 @@ struct MealAPIClientTests {
         #expect(request.url?.absoluteString == "https://www.themealdb.com/api/json/v1/1/filter.php?c=Seafood")
     }
 
+    @Test func lookupRequestAndIngredients() async throws {
+        let fixture = MealHTTPFixture(
+            .http(
+                200,
+                """
+                {"meals":[{
+                  "idMeal":"52772",
+                  "strMeal":"Teriyaki Chicken",
+                  "strCategory":"Chicken",
+                  "strArea":"Japanese",
+                  "strInstructions":"Fry the chicken.",
+                  "strMealThumb":"https://example.com/chicken.jpg",
+                  "strIngredient1":"Chicken",
+                  "strMeasure1":"400g",
+                  "strIngredient2":"Soy sauce",
+                  "strMeasure2":" ",
+                  "strIngredient3":"",
+                  "strMeasure3":"1 tbsp",
+                  "strIngredient4":null,
+                  "strMeasure4":null
+                }]}
+                """))
+        defer { fixture.close() }
+        let details = try await MealAPIClient(session: fixture.session).fetchMeal(id: "52772")
+        #expect(
+            details
+                == MealDetails(
+                    id: "52772",
+                    name: "Teriyaki Chicken",
+                    category: "Chicken",
+                    area: "Japanese",
+                    instructions: "Fry the chicken.",
+                    thumbnailURL: URL(string: "https://example.com/chicken.jpg"),
+                    ingredients: [
+                        MealIngredient(name: "Chicken", measure: "400g"),
+                        MealIngredient(name: "Soy sauce", measure: ""),
+                    ]))
+        var requests = fixture.requests.makeAsyncIterator()
+        let request = try #require(await requests.next())
+        #expect(request.httpMethod == "GET")
+        #expect(request.url?.absoluteString == "https://www.themealdb.com/api/json/v1/1/lookup.php?i=52772")
+    }
+
+    @Test(arguments: ["{\"meals\":[]}", "{\"meals\":null}"])
+    func lookupMissingMeal(body: String) async {
+        let fixture = MealHTTPFixture(.http(200, body))
+        defer { fixture.close() }
+        do {
+            _ = try await MealAPIClient(session: fixture.session).fetchMeal(id: "52772")
+            Issue.record("Expected not found")
+        } catch {
+            guard case .notFound = error else {
+                Issue.record("Unexpected error: \(error)")
+                return
+            }
+        }
+    }
+
+    @Test func lookupHTTPFailure() async {
+        let fixture = MealHTTPFixture(.http(503, "Unavailable"))
+        defer { fixture.close() }
+        do {
+            _ = try await MealAPIClient(session: fixture.session).fetchMeal(id: "52772")
+            Issue.record("Expected HTTP failure")
+        } catch {
+            guard case .httpStatus(503) = error else {
+                Issue.record("Unexpected error: \(error)")
+                return
+            }
+        }
+    }
+
     @Test(arguments: ["{\"meals\":[]}", "{\"meals\":null}"])
     func emptyResults(body: String) async throws {
         let fixture = MealHTTPFixture(.http(200, body))

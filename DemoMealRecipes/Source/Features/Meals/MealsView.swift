@@ -5,42 +5,33 @@ struct MealsView: View {
     @State private var retryCount = 0
     @State private var retryRequested = false
     @State private var refreshTask: Task<Void, Never>?
+    private let service: any MealService
 
-    init(viewModel: MealsViewModel) {
+    init(viewModel: MealsViewModel, service: any MealService) {
         _viewModel = State(initialValue: viewModel)
+        self.service = service
     }
 
     var body: some View {
         List(viewModel.meals) { meal in
-            HStack(spacing: 16) {
-                AsyncImage(url: meal.thumbnailURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image.resizable().scaledToFill()
-                    case .failure:
-                        Image(systemName: "exclamationmark.triangle")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .foregroundStyle(.secondary)
-                            .background(.quaternary)
-                    case .empty:
-                        Image(systemName: "fork.knife")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .foregroundStyle(.secondary)
-                            .background(.quaternary)
-                    @unknown default:
-                        Color.clear
-                    }
-                }
-                .frame(width: 64, height: 64)
-                .clipShape(.rect(cornerRadius: 12))
-                .accessibilityHidden(true)
+            NavigationLink(value: meal) {
+                HStack(spacing: 16) {
+                    MealRemoteImage(url: meal.thumbnailURL)
+                        .frame(width: 64, height: 64)
+                        .clipShape(.rect(cornerRadius: 12))
+                        .accessibilityHidden(true)
 
-                Text(meal.name)
-                    .font(.headline)
-                    .padding(.vertical, 8)
+                    Text(meal.name)
+                        .font(.headline)
+                        .padding(.vertical, 8)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("meal.\(meal.id)")
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityIdentifier("meal.\(meal.id)")
+            .buttonStyle(.plain)
+        }
+        .navigationDestination(for: Meal.self) { meal in
+            MealDetailView(meal: meal, service: service)
         }
         .listStyle(.plain)
         .accessibilityIdentifier("meals.list")

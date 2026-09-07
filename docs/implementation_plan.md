@@ -13,7 +13,7 @@ Mała, działająca aplikacja ma pokazywać prawidłowe użycie SwiftUI i Swift 
 - zachowanie przy ponownym wejściu, odświeżaniu i błędach;
 - deterministyczne testowanie zachowań asynchronicznych.
 
-Każda warstwa i mechanizm muszą wynikać z tego przepływu. Projekt nie obejmuje wyszukiwania, szczegółów, paginacji, ulubionych, persystencji, własnego cache obrazów ani dodatkowych ekranów demonstracyjnych w aplikacji produkcyjnej.
+Każda warstwa i mechanizm muszą wynikać z tego przepływu. Projekt nie obejmuje wyszukiwania, paginacji, ulubionych, persystencji, własnego cache obrazów ani odtwarzacza wideo. Lista kategorii `Seafood` otwiera ekran szczegółów przepisu (`lookup.php?i=`).
 
 ## 2. Stack i konfiguracja
 
@@ -28,7 +28,7 @@ Każda warstwa i mechanizm muszą wynikać z tego przepływu. Projekt nie obejmu
 
 ## 3. Zachowanie aplikacji
 
-Ekran startowy od razu pokazuje listę przepisów kategorii `Seafood` z TheMealDB. Każdy wiersz zawiera nazwę oraz miniaturę. Wiersze nie mają akcji ani nawigacji.
+Ekran startowy od razu pokazuje listę przepisów kategorii `Seafood` z TheMealDB. Każdy wiersz zawiera nazwę oraz miniaturę. Tapnięcie wiersza otwiera szczegóły przepisu (składniki i instrukcje) z `GET lookup.php?i={idMeal}`.
 
 | Sytuacja | Zachowanie |
 | --- | --- |
@@ -55,7 +55,9 @@ Małe MVVM, z zależnościami przekazywanymi przez inicjalizatory.
 | `MealsViewModel` | Stan ekranu, reguły pobierania, przejścia stanu i obsługa wyników |
 | `MealsState` | Dozwolone stany zawartości i odświeżania |
 | `Meal` | Niezmienny model pojedynczego wiersza |
-| `MealService` | Protokół z jedną operacją pobierającą przepisy |
+| `MealDetails` | Pełny przepis z lookup |
+| `MealDetailView` / `MealDetailViewModel` | Ekran szczegółów, jedno pobranie, retry, anulowanie `.task` |
+| `MealService` | Filter listy i lookup przepisu |
 | `MealAPIClient` | Budowa żądania, HTTP, dekodowanie i mapowanie błędów |
 | `MealAPIError` | Typowany kontrakt błędów operacji |
 

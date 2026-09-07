@@ -64,6 +64,12 @@
             }
         }
 
+        @MainActor
+        func fetchMeal(id: String) async throws(MealAPIError) -> MealDetails {
+            guard !Task.isCancelled else { throw .cancelled }
+            return Self.details(id: id)
+        }
+
         func completePendingRequest() {
             pending?.resume(returning: Self.meals(batch: requestCount))
             pending = nil
@@ -79,6 +85,20 @@
                     id: String(index), name: "\(batch == 1 ? "Original" : "Updated") seafood \(index)",
                     thumbnailURL: nil)
             }
+        }
+
+        private static func details(id: String) -> MealDetails {
+            MealDetails(
+                id: id,
+                name: "Original seafood \(id)",
+                category: "Seafood",
+                area: "British",
+                instructions: "Simmer the seafood until cooked through.",
+                thumbnailURL: nil,
+                ingredients: [
+                    MealIngredient(name: "Salmon", measure: "200g"),
+                    MealIngredient(name: "Salt", measure: "1 tsp"),
+                ])
         }
     }
 
@@ -98,10 +118,6 @@
 
         var body: some View {
             VStack(spacing: 0) {
-                if scenario == .refreshFailure {
-                    Button("Restore service") { service.recover() }
-                        .accessibilityIdentifier("scenario.recover")
-                }
                 if scenario == .lifecycle || scenario == .refreshLifecycle {
                     Text(
                         "Requests: \(service.requestCount), cancellations: \(service.cancellationCount), revision: \(parentRevision)"
@@ -120,9 +136,19 @@
                     .padding(.horizontal)
                 }
                 if isVisible {
-                    MealsView(viewModel: viewModel)
+                    MealsView(viewModel: viewModel, service: service)
                 } else {
                     Color.clear
+                }
+            }
+            .safeAreaInset(edge: .bottom) {
+                if scenario == .refreshFailure {
+                    Button("Restore service") { service.recover() }
+                        .buttonStyle(.bordered)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(.bar)
+                        .accessibilityIdentifier("scenario.recover")
                 }
             }
             .onChange(of: service.requestCount) { _, count in

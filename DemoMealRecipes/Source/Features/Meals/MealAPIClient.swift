@@ -2,6 +2,7 @@ import Foundation
 
 nonisolated protocol MealService: Sendable {
     func fetchMeals() async throws(MealAPIError) -> [Meal]
+    func fetchMeal(id: String) async throws(MealAPIError) -> MealDetails
 }
 
 nonisolated enum MealAPIError: Error {
@@ -9,6 +10,7 @@ nonisolated enum MealAPIError: Error {
     case invalidResponse
     case httpStatus(Int)
     case decoding(any Error)
+    case notFound
     case cancelled
 
     var message: String {
@@ -19,6 +21,8 @@ nonisolated enum MealAPIError: Error {
             "The server couldn't complete the request. Please try again."
         case .decoding:
             "The recipes couldn't be read. Please try again."
+        case .notFound:
+            "This recipe isn't available. Please try again."
         case .cancelled:
             ""
         }
@@ -34,12 +38,47 @@ nonisolated struct MealAPIClient: MealService {
 
     @concurrent
     func fetchMeals() async throws(MealAPIError) -> [Meal] {
+        guard let url = URL(string: "https://www.themealdb.com/api/json/v1/1/filter.php?c=Seafood") else {
+            throw MealAPIError.invalidResponse
+        }
+        let body = try await loadData(from: url)
+        let meals: [Meal]
+        do {
+            meals = try JSONDecoder().decode(MealsResponse.self, from: body).meals
+        } catch {
+            throw MealAPIError.decoding(error)
+        }
+        if Task.isCancelled {
+            throw MealAPIError.cancelled
+        }
+        return meals
+    }
+
+    @concurrent
+    func fetchMeal(id: String) async throws(MealAPIError) -> MealDetails {
+        let encodedID = id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id
+        guard let url = URL(string: "https://www.themealdb.com/api/json/v1/1/lookup.php?i=\(encodedID)") else {
+            throw MealAPIError.invalidResponse
+        }
+        let body = try await loadData(from: url)
+        let meals: [LookupMeal]
+        do {
+            meals = try JSONDecoder().decode(LookupResponse.self, from: body).meals ?? []
+        } catch {
+            throw MealAPIError.decoding(error)
+        }
+        if Task.isCancelled {
+            throw MealAPIError.cancelled
+        }
+        guard let meal = meals.first else {
+            throw MealAPIError.notFound
+        }
+        return meal.details
+    }
+
+    private func loadData(from url: URL) async throws(MealAPIError) -> Data {
         do {
             try Task.checkCancellation()
-            guard let url = URL(string: "https://www.themealdb.com/api/json/v1/1/filter.php?c=Seafood") else {
-                throw MealAPIError.invalidResponse
-            }
-
             let (body, response) = try await session.data(for: URLRequest(url: url))
             try Task.checkCancellation()
             guard let response = response as? HTTPURLResponse else {
@@ -48,15 +87,7 @@ nonisolated struct MealAPIClient: MealService {
             guard (200..<300).contains(response.statusCode) else {
                 throw MealAPIError.httpStatus(response.statusCode)
             }
-
-            let meals: [Meal]
-            do {
-                meals = try JSONDecoder().decode(MealsResponse.self, from: body).meals
-            } catch {
-                throw MealAPIError.decoding(error)
-            }
-            try Task.checkCancellation()
-            return meals
+            return body
         } catch {
             if Task.isCancelled || error is CancellationError || (error as? URLError)?.code == .cancelled {
                 throw .cancelled
@@ -78,6 +109,59 @@ nonisolated struct MealAPIClient: MealService {
         init(from decoder: any Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             meals = try container.decode([Meal]?.self, forKey: .meals) ?? []
+        }
+    }
+
+    private struct LookupResponse: Decodable {
+        let meals: [LookupMeal]?
+    }
+
+    private struct LookupMeal: Decodable {
+        let details: MealDetails
+
+        private struct DynamicCodingKey: CodingKey {
+            var stringValue: String
+            init?(stringValue: String) {
+                self.stringValue = stringValue
+            }
+            var intValue: Int? { nil }
+            init?(intValue: Int) { nil }
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+            func field(_ name: String) throws -> String? {
+                guard let key = DynamicCodingKey(stringValue: name) else { return nil }
+                return try container.decodeIfPresent(String.self, forKey: key)
+            }
+            guard let idKey = DynamicCodingKey(stringValue: "idMeal"),
+                let nameKey = DynamicCodingKey(stringValue: "strMeal")
+            else {
+                throw DecodingError.dataCorrupted(
+                    .init(codingPath: decoder.codingPath, debugDescription: "Missing meal keys"))
+            }
+            let id = try container.decode(String.self, forKey: idKey)
+            let name = try container.decode(String.self, forKey: nameKey)
+            var ingredients: [MealIngredient] = []
+            for index in 1...20 {
+                let ingredientName =
+                    try field("strIngredient\(index)")?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                guard !ingredientName.isEmpty else { continue }
+                let measure =
+                    try field("strMeasure\(index)")?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                ingredients.append(MealIngredient(name: ingredientName, measure: measure))
+            }
+            let thumbnail = try field("strMealThumb").flatMap(URL.init(string:))
+            details = MealDetails(
+                id: id,
+                name: name,
+                category: try field("strCategory"),
+                area: try field("strArea"),
+                instructions: try field("strInstructions") ?? "",
+                thumbnailURL: thumbnail,
+                ingredients: ingredients)
         }
     }
 }

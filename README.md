@@ -1,6 +1,6 @@
 # Meal Recipes
 
-An iPhone demo of SwiftUI state, view identity, and cooperative cancellation using a real HTTP API. It displays Seafood recipes from [TheMealDB](https://www.themealdb.com/documentation), with initial loading, pull-to-refresh, empty results, and retry.
+An iPhone demo of SwiftUI state, view identity, and cooperative cancellation using a real HTTP API. It displays Seafood recipes from [TheMealDB](https://www.themealdb.com/documentation), with initial loading, pull-to-refresh, empty results, retry, and a recipe detail screen.
 
 ## Run
 
@@ -22,12 +22,16 @@ The default destination is iPhone 17 Pro. Override it with `SIMULATOR='device na
 
 | Type | Responsibility |
 | --- | --- |
-| `MealsView` | List, presentation, gestures, and ownership of work tied to the screen |
-| `MealsViewModel` | Observable state, admission of requests, and state transitions |
+| `MealsView` | List, presentation, gestures, navigation, and ownership of work tied to the screen |
+| `MealsViewModel` | Observable list state, admission of requests, and state transitions |
 | `MealsState` | Initial loading/failure and loaded content with its refresh state |
-| `MealService` | One asynchronous, typed-throwing operation; injection boundary for tests |
+| `MealDetailView` | Recipe screen; owns a ViewModel in `@State` |
+| `MealDetailViewModel` | Single lookup, load/retry/cancel without refresh nesting |
+| `MealDetailState` | idle, loading, failed, loaded |
+| `MealService` | Typed-throwing list filter and meal lookup |
 | `MealAPIClient` | URLSession, HTTP validation, decoding, and error classification |
-| `Meal` | Immutable, Sendable row with an API-provided identity |
+| `Meal` | Immutable, Sendable list row with an API-provided identity |
+| `MealDetails` | Full recipe: ingredients, instructions, category, area |
 
 The feature is in `DemoMealRecipes/Source/Features/Meals/`. The application entry point keeps the production `MealAPIClient` and `MealsViewModel` in `@State` so scene updates reuse the same instances. Debug scenarios are in `Source/Application/MealScenarios.swift`; they use the same screen and ViewModel as the live application. The implementation plan is in `docs/implementation_plan.md`.
 
@@ -37,7 +41,7 @@ The feature is in `DemoMealRecipes/Source/Features/Meals/`. The application entr
 
 `MealsViewModel` imports Observation and has no SwiftUI dependency. Its state is externally read-only. The service and internal completion signals are implementation details; only screen state drives rendering.
 
-Each row uses `idMeal` from the server. The List remains in the same structural position as loading, error, and content change. Refresh updates its collection without assigning a new identity to the List. Existing content remains visible until a successful replacement arrives.
+Each row uses `idMeal` from the server and pushes a detail screen with `NavigationLink`. The List remains in the same structural position as loading, error, and content change. Refresh updates its collection without assigning a new identity to the List. Existing content remains visible until a successful replacement arrives. The production `MealAPIClient` is passed into `MealsView` so the destination can create `MealDetailView` without assembling HTTP in `body`.
 
 ## State transitions
 
@@ -65,6 +69,8 @@ A successful empty response is `loaded([])`. Refresh state is nested inside load
 
 Automatic appearance loads from idle. Loaded content, including an empty collection, does not trigger another request. A displayed failure requires explicit retry. Background/foreground transitions do not initiate fetching.
 
+Tapping a row loads `lookup.php?i=` on a new `MealDetailViewModel`. That screen uses idle / loading / failed / loaded only. There is no pull-to-refresh and no completion-waiter queue: SwiftUI cancels the view `.task` on pop, and a later push creates a new ViewModel. Retry uses the same `.task(id:)` one-shot pattern as the list. A successful lookup is not refetched on a later `.task` run with the same identity.
+
 ## Task ownership and cancellation
 
 ### Initial load and retry
@@ -91,11 +97,11 @@ MainActor protects access to state, but an async method can interleave with anot
 
 ## Execution and isolation
 
-`MealAPIClient.fetchMeals()` is `@concurrent`. It runs preparation and JSON decoding outside the caller's actor while remaining in the same task. The immutable client and model are Sendable; decoded types and the service contract have explicit nonisolated declarations. Each request owns its JSONDecoder.
+`MealAPIClient.fetchMeals()` and `fetchMeal(id:)` are `@concurrent`. They share HTTP validation and error mapping. They run preparation and JSON decoding outside the caller's actor while remaining in the same task. The immutable client and model are Sendable; decoded types and the service contract have explicit nonisolated declarations. Each request owns its JSONDecoder.
 
 URLSession suspends during network I/O. The reason for the explicit executor change is the synchronous decoding work. `@concurrent` does not create a Task and does not discard cancellation context. With Approachable Concurrency, a nonisolated async declaration alone would not express this executor change.
 
-The client validates HTTP before decoding the success payload. `meals: null` and an empty array are valid empty results; a missing `meals` field is a decoding failure. Typed `MealAPIError` preserves underlying transport/decoding errors and HTTP status for diagnosis. Cancellation is a separate case and is never shown as a screen failure.
+The client validates HTTP before decoding the success payload. For the category filter, `meals: null` and an empty array are valid empty results; a missing `meals` field is a decoding failure. For lookup, `null` or an empty array is `MealAPIError.notFound`. Typed `MealAPIError` preserves underlying transport/decoding errors and HTTP status for diagnosis. Cancellation is a separate case and is never shown as a screen failure.
 
 ## Verification
 
@@ -103,7 +109,7 @@ Swift Testing exercises the client through an injected ephemeral URLSession and 
 
 ViewModel tests use a controlled actor service that announces each request and waits for the test to provide a result. It deliberately permits a response after cancellation. Assertions cover state transitions, admission of overlapping calls, preservation of content, cancelled waiters, and rapid reentry. There are no timing sleeps or polling loops.
 
-XCTest UI tests exercise scrolling, pull-to-refresh, empty results, retry, and failed refresh. The Debug lifecycle host mounts/unmounts the actual MealsView while retaining its ViewModel and withholding service responses. It checks both cancellation paths, a return before cancellation settles, and parent updates preserving view identity. The initial-load host intentionally reports cancellation before a test explicitly completes the pending response. The refresh host unmounts the screen as soon as refresh starts and completes the cancelled request, allowing XCTest to finish the gesture. The failed-refresh fixture remains unavailable until the test explicitly restores the service, so recovery does not depend on the number of callbacks emitted by a gesture.
+XCTest UI tests exercise scrolling, pull-to-refresh, empty results, retry, failed refresh, and opening a recipe from the list. The Debug lifecycle host mounts/unmounts the actual MealsView while retaining its ViewModel and withholding service responses. It checks both cancellation paths, a return before cancellation settles, and parent updates preserving view identity. The initial-load host intentionally reports cancellation before a test explicitly completes the pending response. The refresh host unmounts the screen as soon as refresh starts and completes the cancelled request, allowing XCTest to finish the gesture. The failed-refresh fixture remains unavailable until the test explicitly restores the service, so recovery does not depend on the number of callbacks emitted by a gesture. Detail fixtures return a canned recipe for the selected row id.
 
 To select a deterministic scenario, add launch arguments in the scheme:
 
@@ -120,7 +126,7 @@ Fixtures use local placeholders for images. Hosted unit tests select an offline 
 
 ## Scope and limitations
 
-The API test key `1` is intended for development and educational use. There are no details, search, pagination, persistence, or custom image cache. AsyncImage handles individual thumbnails independently of the list request. The initial screen is intentionally a small native List with Dynamic Type, VoiceOver labels, and system light/dark appearance.
+The API test key `1` is intended for development and educational use. There is no search, pagination, persistence, video player, or custom image cache. AsyncImage handles individual thumbnails independently of list and lookup requests. The list is a small native List with Dynamic Type, VoiceOver labels, and system light/dark appearance.
 
 The Xcode toolchain can emit an AppIntents metadata extraction warning for targets that do not link AppIntents. Swift compiler warnings are treated as errors; the app does not add an unused AppIntents dependency to hide toolchain output.
 
