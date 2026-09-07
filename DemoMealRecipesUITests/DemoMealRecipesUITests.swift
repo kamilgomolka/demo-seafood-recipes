@@ -25,7 +25,7 @@ final class DemoMealRecipesUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["meal.1"].firstMatch.waitForExistence(timeout: 5))
         app.descendants(matching: .any)["meal.1"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["Simmer the seafood until cooked through."].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Salmon"].exists)
+        XCTAssertTrue(app.staticTexts["• Salmon"].waitForExistence(timeout: 5))
     }
 
     @MainActor

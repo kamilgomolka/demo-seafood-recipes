@@ -39,39 +39,25 @@ struct MealsView: View {
         .overlay {
             switch viewModel.state {
             case .idle, .loading:
-                ProgressView("Loading recipes…")
-                    .accessibilityIdentifier("meals.loading")
-                    .allowsHitTesting(false)
+                loadingView
             case .failed(let error):
-                ContentUnavailableView {
-                    Label("Couldn't load recipes", systemImage: "wifi.exclamationmark")
-                } description: {
-                    Text(error.message)
-                } actions: {
-                    retryButton
-                }
+                errorView(error)
             case .loaded(let meals, _) where meals.isEmpty:
-                ContentUnavailableView("No recipes", systemImage: "fork.knife", description: Text("Pull to try again."))
-                    .accessibilityIdentifier("meals.empty")
-                    .allowsHitTesting(false)
+                emptyView
             case .loaded where viewModel.meals(matching: searchText).isEmpty:
-                ContentUnavailableView.search
-                    .accessibilityIdentifier("meals.searchEmpty")
-                    .allowsHitTesting(false)
+                searchEmptyView
             case .loaded:
                 EmptyView()
             }
         }
         .safeAreaInset(edge: .top) {
             if case .loaded(_, refresh: .failed(let error)) = viewModel.state {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(error.message)
-                    retryButton
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .background(.bar)
-                .accessibilityIdentifier("meals.refreshError")
+                errorView(error)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(.bar)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("meals.refreshError")
             }
         }
         .navigationTitle("Seafood recipes")
@@ -90,6 +76,31 @@ struct MealsView: View {
         .onDisappear {
             refreshTask?.cancel()
         }
+    }
+
+    private var loadingView: some View {
+        ProgressView("Loading recipes…")
+            .accessibilityIdentifier("meals.loading")
+            .allowsHitTesting(false)
+    }
+
+    private func errorView(_ error: MealAPIError) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(error.message)
+            retryButton
+        }
+    }
+
+    private var emptyView: some View {
+        ContentUnavailableView("No recipes", systemImage: "fork.knife", description: Text("Pull to try again."))
+            .accessibilityIdentifier("meals.empty")
+            .allowsHitTesting(false)
+    }
+
+    private var searchEmptyView: some View {
+        ContentUnavailableView.search
+            .accessibilityIdentifier("meals.searchEmpty")
+            .allowsHitTesting(false)
     }
 
     private var retryButton: some View {
