@@ -11,6 +11,7 @@ ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor
 
 // MARK: - Info.plist
 
+INFOPLIST_KEY_CFBundleDisplayName = Meal Recipes
 INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES
 INFOPLIST_KEY_UIApplicationSupportsMultipleScenes = YES
 INFOPLIST_KEY_UILaunchScreen_Generation = YES
