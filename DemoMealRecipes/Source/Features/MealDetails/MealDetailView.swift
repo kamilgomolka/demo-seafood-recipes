@@ -41,19 +41,11 @@ struct MealDetailView: View {
         Group {
             switch viewModel.state {
             case .idle, .loading:
-                ProgressView("Loading recipe…")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .accessibilityIdentifier("meal.detail.loading")
+                loadingView
             case .failed(let error):
-                ContentUnavailableView {
-                    Label("Couldn't load recipe", systemImage: "wifi.exclamationmark")
-                } description: {
-                    Text(error.message)
-                } actions: {
-                    retryButton
-                }
+                errorView(error)
             case .loaded(let details):
-                recipe(details)
+                loadedView(details)
             }
         }
         .accessibilityIdentifier("meal.detail")
@@ -69,6 +61,22 @@ struct MealDetailView: View {
         }
     }
 
+    private var loadingView: some View {
+        ProgressView("Loading recipe…")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .accessibilityIdentifier("meal.detail.loading")
+    }
+
+    private func errorView(_ error: MealAPIError) -> some View {
+        ContentUnavailableView {
+            Label("Couldn't load recipe", systemImage: "wifi.exclamationmark")
+        } description: {
+            Text(error.message)
+        } actions: {
+            retryButton
+        }
+    }
+
     private var retryButton: some View {
         Button("Try again") {
             retryRequested = true
@@ -79,7 +87,7 @@ struct MealDetailView: View {
         .accessibilityIdentifier("meal.detail.retry")
     }
 
-    private func recipe(_ details: MealDetails) -> some View {
+    private func loadedView(_ details: MealDetails) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 MealRemoteImage(url: details.thumbnailURL)
@@ -88,48 +96,59 @@ struct MealDetailView: View {
                     .clipped()
                     .accessibilityHidden(true)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(details.name)
-                        .font(.title2)
-                        .bold()
-                    let subtitle = [details.category, details.area]
-                        .compactMap { $0 }
-                        .joined(separator: " · ")
-                    if !subtitle.isEmpty {
-                        Text(subtitle)
+                mealHeaderView(details)
+                ingredientsView(details)
+                instructionsView(details)
+            }
+        }
+    }
+
+    private func mealHeaderView(_ details: MealDetails) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(details.name)
+                .font(.title2)
+                .bold()
+            let subtitle = [details.category, details.area]
+                .compactMap { $0 }
+                .joined(separator: " · ")
+            if !subtitle.isEmpty {
+                Text(subtitle)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    @ViewBuilder
+    private func ingredientsView(_ details: MealDetails) -> some View {
+        if !details.ingredients.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("🛒 Ingredients")
+                    .font(.title3).bold()
+                ForEach(Array(details.ingredients.enumerated()), id: \.offset) { _, ingredient in
+                    HStack(alignment: .top) {
+                        Text("• \(ingredient.name)")
+                            .font(.subheadline)
+                            .frame(alignment: .leading)
+                            .padding(.leading, 4.0)
+                        Text("(\(ingredient.measure))")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding(.horizontal)
-
-                if !details.ingredients.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("🛒 Ingredients")
-                            .font(.title3).bold()
-                        ForEach(Array(details.ingredients.enumerated()), id: \.offset) { _, ingredient in
-                            HStack(alignment: .top) {
-                                Text("• \(ingredient.name)")
-                                    .font(.subheadline)
-                                    .frame(alignment: .leading)
-                                    .padding(.leading, 4.0)
-                                Text("(\(ingredient.measure))")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .padding(.top)
-                    .padding(.horizontal)
-                }
-
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("📖 Instructions")
-                        .font(.title3).bold()
-                    Text(details.instructions)
-                        .padding(.leading, 4.0)
-                }
-                .padding()
             }
+            .padding(.top)
+            .padding(.horizontal)
         }
+    }
+
+    private func instructionsView(_ details: MealDetails) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("📖 Instructions")
+                .font(.title3).bold()
+            Text(details.instructions)
+                .padding(.leading, 4.0)
+        }
+        .padding()
     }
 }
