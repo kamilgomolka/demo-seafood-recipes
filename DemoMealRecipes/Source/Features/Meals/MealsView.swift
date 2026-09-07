@@ -5,6 +5,7 @@ struct MealsView: View {
     @State private var retryCount = 0
     @State private var retryRequested = false
     @State private var refreshTask: Task<Void, Never>?
+    @State private var searchText = ""
     private let service: any MealService
 
     init(viewModel: MealsViewModel, service: any MealService) {
@@ -13,7 +14,7 @@ struct MealsView: View {
     }
 
     var body: some View {
-        List(viewModel.meals) { meal in
+        List(viewModel.meals(matching: searchText)) { meal in
             NavigationLink(value: meal) {
                 HStack(spacing: 16) {
                     MealRemoteImage(url: meal.thumbnailURL)
@@ -53,6 +54,10 @@ struct MealsView: View {
                 ContentUnavailableView("No recipes", systemImage: "fork.knife", description: Text("Pull to try again."))
                     .accessibilityIdentifier("meals.empty")
                     .allowsHitTesting(false)
+            case .loaded where viewModel.meals(matching: searchText).isEmpty:
+                ContentUnavailableView.search
+                    .accessibilityIdentifier("meals.searchEmpty")
+                    .allowsHitTesting(false)
             case .loaded:
                 EmptyView()
             }
@@ -70,6 +75,7 @@ struct MealsView: View {
             }
         }
         .navigationTitle("Seafood recipes")
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search recipes")
         .task(id: retryCount) {
             if retryRequested {
                 retryRequested = false

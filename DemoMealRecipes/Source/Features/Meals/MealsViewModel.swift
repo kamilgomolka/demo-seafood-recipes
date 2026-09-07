@@ -1,3 +1,4 @@
+import Foundation
 import Observation
 
 enum MealsState {
@@ -35,6 +36,12 @@ final class MealsViewModel {
     var meals: [Meal] {
         guard case .loaded(let meals, _) = state else { return [] }
         return meals
+    }
+
+    func meals(matching query: String) -> [Meal] {
+        let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return meals }
+        return meals.filter { $0.name.localizedStandardContains(query) }
     }
 
     func loadIfNeeded() async {

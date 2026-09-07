@@ -28,6 +28,20 @@ struct MealsViewModelTests {
         #expect(await service.count == 1)
     }
 
+    @Test func localSearchFiltersLoadedNames() async throws {
+        let service = ControlledMealService()
+        var requests = service.requests.makeAsyncIterator()
+        let model = MealsViewModel(service: service)
+        let load = Task { await model.loadIfNeeded() }
+        await service.complete(
+            try #require(await requests.next()),
+            with: .success(original + updated))
+        await load.value
+        #expect(model.meals(matching: "sal") == original)
+        #expect(model.meals(matching: "  ").count == 2)
+        #expect(model.meals(matching: "xyz").isEmpty)
+    }
+
     @Test func emptyResultIsLoadedAndCanRefresh() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()

@@ -1,6 +1,6 @@
 # Meal Recipes
 
-An iPhone demo of SwiftUI state, view identity, and cooperative cancellation using a real HTTP API. It displays Seafood recipes from [TheMealDB](https://www.themealdb.com/documentation), with initial loading, pull-to-refresh, empty results, retry, and a recipe detail screen.
+An iPhone demo of SwiftUI state, view identity, and cooperative cancellation using a real HTTP API. It displays Seafood recipes from [TheMealDB](https://www.themealdb.com/documentation), with initial loading, pull-to-refresh, local name search, empty results, retry, and a recipe detail screen.
 
 ## Run
 
@@ -71,6 +71,8 @@ Automatic appearance loads from idle. Loaded content, including an empty collect
 
 Tapping a row loads `lookup.php?i=` on a new `MealDetailViewModel`. That screen uses idle / loading / failed / loaded only. There is no pull-to-refresh and no completion-waiter queue: SwiftUI cancels the view `.task` on pop, and a later push creates a new ViewModel. Retry uses the same `.task(id:)` one-shot pattern as the list. A successful lookup is not refetched on a later `.task` run with the same identity.
 
+The list search field filters already loaded names locally (`localizedStandardContains`). It does not call the API. An empty filter result is distinct from an empty network response.
+
 ## Task ownership and cancellation
 
 ### Initial load and retry
@@ -126,7 +128,7 @@ Fixtures use local placeholders for images. Hosted unit tests select an offline 
 
 ## Scope and limitations
 
-The API test key `1` is intended for development and educational use. There is no search, pagination, persistence, video player, or custom image cache. AsyncImage handles individual thumbnails independently of list and lookup requests. The list is a small native List with Dynamic Type, VoiceOver labels, and system light/dark appearance.
+The API test key `1` is intended for development and educational use. There is no remote search, pagination, persistence, video player, or custom image cache. AsyncImage handles individual thumbnails independently of list and lookup requests. The list is a small native List with Dynamic Type, VoiceOver labels, and system light/dark appearance.
 
 The Xcode toolchain can emit an AppIntents metadata extraction warning for targets that do not link AppIntents. Swift compiler warnings are treated as errors; the app does not add an unused AppIntents dependency to hide toolchain output.
 

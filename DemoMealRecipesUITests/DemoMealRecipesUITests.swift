@@ -29,6 +29,18 @@ final class DemoMealRecipesUITests: XCTestCase {
     }
 
     @MainActor
+    func testLocalSearchFiltersList() {
+        let app = launch("success")
+        XCTAssertTrue(app.staticTexts["Original seafood 1"].waitForExistence(timeout: 5))
+        let field = app.searchFields["Search recipes"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap()
+        field.typeText("seafood 30")
+        XCTAssertTrue(app.staticTexts["Original seafood 30"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Original seafood 1"].exists)
+    }
+
+    @MainActor
     func testFailureCanBeRetried() {
         let app = launch("failure")
         let retry = app.buttons["meals.retry"]
