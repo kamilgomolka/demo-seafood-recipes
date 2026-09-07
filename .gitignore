@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.xcuserstate
+*.hmap
+*.moved-aside
+DerivedData/
+build/
+*.xcresult
+
+# Local, untracked build configuration (Team ID). See Config/Local.xcconfig.example
+Config/Local.xcconfig
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# App packaging
+*.ipa
+*.dSYM
+*.dSYM.zip

@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Show toolchain
+        run: xcodebuild -version
+
+      # Simulator device names change between Xcode releases; this makes a
+      # destination mismatch diagnosable from the log instead of guesswork.
+      - name: List available destinations
+        run: make destinations
+
+      - name: Build and test
+        run: make test
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: TestResults.xcresult
+
+  lint:
+    name: Lint
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check formatting
+        run: make lint
