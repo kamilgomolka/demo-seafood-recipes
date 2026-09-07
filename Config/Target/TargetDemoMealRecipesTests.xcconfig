@@ -1,4 +1,0 @@
-#include "TargetBase.xcconfig"
-
-BUNDLE_LOADER = $(TEST_HOST)
-TEST_HOST = $(BUILT_PRODUCTS_DIR)/DemoMealRecipes.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DemoMealRecipes

@@ -1,6 +1,6 @@
 import Testing
 
-@testable import DemoMealRecipes
+@testable import DemoSeafoodRecipes
 
 actor ControlledMealService: MealService {
     let requests: AsyncStream<Int>

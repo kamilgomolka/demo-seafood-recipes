@@ -1,17 +1,17 @@
 import Testing
 
-@testable import DemoMealRecipes
+@testable import DemoSeafoodRecipes
 
 @Suite(.timeLimit(.minutes(1)))
 @MainActor
-struct MealsViewModelTests {
+struct SeafoodListViewModelTests {
     private let original = [Meal(id: "1", name: "Salmon", thumbnailURL: nil)]
     private let updated = [Meal(id: "2", name: "Prawns", thumbnailURL: nil)]
 
     @Test func initialLoadAndRepeatedAppearance() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let load = Task { await model.loadIfNeeded() }
         let request = try #require(await requests.next())
         guard case .loading = model.state else {
@@ -22,7 +22,7 @@ struct MealsViewModelTests {
         }
         await service.complete(request, with: .success(original))
         await load.value
-        #expect(model.meals == original)
+        #expect(model.seafood == original)
         #expect(!model.state.isLoading)
         await model.loadIfNeeded()
         #expect(await service.count == 1)
@@ -31,21 +31,21 @@ struct MealsViewModelTests {
     @Test func localSearchFiltersLoadedNames() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let load = Task { await model.loadIfNeeded() }
         await service.complete(
             try #require(await requests.next()),
             with: .success(original + updated))
         await load.value
-        #expect(model.meals(matching: "sal") == original)
-        #expect(model.meals(matching: "  ").count == 2)
-        #expect(model.meals(matching: "xyz").isEmpty)
+        #expect(model.seafood(matching: "sal") == original)
+        #expect(model.seafood(matching: "  ").count == 2)
+        #expect(model.seafood(matching: "xyz").isEmpty)
     }
 
     @Test func emptyResultIsLoadedAndCanRefresh() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let load = Task { await model.loadIfNeeded() }
         await service.complete(try #require(await requests.next()), with: .success([]))
         await load.value
@@ -59,13 +59,13 @@ struct MealsViewModelTests {
         let refresh = Task { await model.reload() }
         await service.complete(try #require(await requests.next()), with: .success(updated))
         await refresh.value
-        #expect(model.meals == updated)
+        #expect(model.seafood == updated)
     }
 
     @Test func failureRequiresExplicitRetry() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let load = Task { await model.loadIfNeeded() }
         await service.complete(try #require(await requests.next()), with: .failure(.httpStatus(503)))
         await load.value
@@ -78,20 +78,20 @@ struct MealsViewModelTests {
         let retry = Task { await model.reload() }
         await service.complete(try #require(await requests.next()), with: .success(original))
         await retry.value
-        #expect(model.meals == original)
+        #expect(model.seafood == original)
     }
 
     @Test func refreshPreservesContentOnFailureAndRetryReplacesIt() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let load = Task { await model.loadIfNeeded() }
         await service.complete(try #require(await requests.next()), with: .success(original))
         await load.value
 
         let refresh = Task { await model.reload() }
         let request = try #require(await requests.next())
-        #expect(model.meals == original)
+        #expect(model.seafood == original)
         #expect(model.state.isLoading)
         await model.reload()
         #expect(await service.count == 2)
@@ -116,7 +116,7 @@ struct MealsViewModelTests {
     @Test func cancellationDiscardsLateSuccessAndAllowsReentry() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let first = Task { await model.loadIfNeeded() }
         let firstRequest = try #require(await requests.next())
         first.cancel()
@@ -133,16 +133,16 @@ struct MealsViewModelTests {
         await service.complete(firstRequest, with: .success(original))
         await first.value
         let secondRequest = try #require(await requests.next())
-        #expect(model.meals.isEmpty)
+        #expect(model.seafood.isEmpty)
         await service.complete(secondRequest, with: .success(updated))
         await reentry.value
-        #expect(model.meals == updated)
+        #expect(model.seafood == updated)
     }
 
     @Test func cancellingRefreshPreservesPreviousContentEvenWhenItFails() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let load = Task { await model.loadIfNeeded() }
         await service.complete(try #require(await requests.next()), with: .success(original))
         await load.value
@@ -161,7 +161,7 @@ struct MealsViewModelTests {
     @Test func serviceCancellationRestoresIdle() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let load = Task { await model.loadIfNeeded() }
         await service.complete(try #require(await requests.next()), with: .failure(.cancelled))
         await load.value
@@ -172,12 +172,12 @@ struct MealsViewModelTests {
         let retry = Task { await model.loadIfNeeded() }
         await service.complete(try #require(await requests.next()), with: .success(original))
         await retry.value
-        #expect(model.meals == original)
+        #expect(model.seafood == original)
     }
 
     @Test func cancelledCallerDoesNotStartRequest() async {
         let service = ControlledMealService()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let load = Task {
             await model.loadIfNeeded()
         }
@@ -189,7 +189,7 @@ struct MealsViewModelTests {
     @Test func waitingAppearanceCanBeCancelledWithoutCancellingTheOwner() async throws {
         let service = ControlledMealService()
         var requests = service.requests.makeAsyncIterator()
-        let model = MealsViewModel(service: service)
+        let model = SeafoodListViewModel(service: service)
         let owner = Task { await model.loadIfNeeded() }
         let request = try #require(await requests.next())
         let (entered, continuation) = AsyncStream<Void>.makeStream()
@@ -205,7 +205,7 @@ struct MealsViewModelTests {
         #expect(model.state.isLoading)
         await service.complete(request, with: .success(original))
         await owner.value
-        #expect(model.meals == original)
+        #expect(model.seafood == original)
         #expect(await service.count == 1)
     }
 }

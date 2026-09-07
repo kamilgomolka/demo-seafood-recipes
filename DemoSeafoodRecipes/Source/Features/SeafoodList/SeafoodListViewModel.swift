@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-enum MealsState {
+enum SeafoodListState {
     case idle
     case loading
     case failed(MealAPIError)
@@ -23,8 +23,8 @@ enum MealsState {
 
 @MainActor
 @Observable
-final class MealsViewModel {
-    private(set) var state: MealsState = .idle
+final class SeafoodListViewModel {
+    private(set) var state: SeafoodListState = .idle
 
     private let service: any MealService
     @ObservationIgnored private var completionWaiters: [CheckedContinuation<Void, Never>] = []
@@ -33,15 +33,15 @@ final class MealsViewModel {
         self.service = service
     }
 
-    var meals: [Meal] {
+    var seafood: [Meal] {
         guard case .loaded(let meals, _) = state else { return [] }
         return meals
     }
 
-    func meals(matching query: String) -> [Meal] {
+    func seafood(matching query: String) -> [Meal] {
         let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return meals }
-        return meals.filter { $0.name.localizedStandardContains(query) }
+        guard !query.isEmpty else { return seafood }
+        return seafood.filter { $0.name.localizedStandardContains(query) }
     }
 
     func loadIfNeeded() async {
@@ -57,12 +57,12 @@ final class MealsViewModel {
     func reload() async {
         guard !Task.isCancelled, !state.isLoading else { return }
 
-        let previousMeals: [Meal]?
+        let previousSeafood: [Meal]?
         if case .loaded(let meals, _) = state {
-            previousMeals = meals
+            previousSeafood = meals
             state = .loaded(meals, refresh: .refreshing)
         } else {
-            previousMeals = nil
+            previousSeafood = nil
             state = .loading
         }
 
@@ -71,15 +71,15 @@ final class MealsViewModel {
         do {
             let meals = try await service.fetchMeals()
             guard !Task.isCancelled else {
-                restoreAfterCancellation(previousMeals: previousMeals)
+                restoreAfterCancellation(previousSeafood: previousSeafood)
                 return
             }
             state = .loaded(meals, refresh: .idle)
         } catch {
             if Task.isCancelled || error.isCancelled {
-                restoreAfterCancellation(previousMeals: previousMeals)
-            } else if let previousMeals {
-                state = .loaded(previousMeals, refresh: .failed(error))
+                restoreAfterCancellation(previousSeafood: previousSeafood)
+            } else if let previousSeafood {
+                state = .loaded(previousSeafood, refresh: .failed(error))
             } else {
                 state = .failed(error)
             }
@@ -108,9 +108,9 @@ final class MealsViewModel {
         waiters.forEach { $0.resume() }
     }
 
-    private func restoreAfterCancellation(previousMeals: [Meal]?) {
-        if let previousMeals {
-            state = .loaded(previousMeals, refresh: .idle)
+    private func restoreAfterCancellation(previousSeafood: [Meal]?) {
+        if let previousSeafood {
+            state = .loaded(previousSeafood, refresh: .idle)
         } else {
             state = .idle
         }

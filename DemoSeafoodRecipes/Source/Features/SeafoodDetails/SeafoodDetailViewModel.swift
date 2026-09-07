@@ -1,6 +1,6 @@
 import Observation
 
-enum MealDetailState {
+enum SeafoodDetailState {
     case idle
     case loading
     case failed(MealAPIError)
@@ -13,8 +13,8 @@ enum MealDetailState {
 
 @MainActor
 @Observable
-final class MealDetailViewModel {
-    private(set) var state: MealDetailState = .idle
+final class SeafoodDetailViewModel {
+    private(set) var state: SeafoodDetailState = .idle
 
     private let mealID: String
     private let service: any MealService

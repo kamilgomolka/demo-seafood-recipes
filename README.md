@@ -1,4 +1,4 @@
-# Meal Recipes
+# Seafood Recipes
 
 An iPhone demo of SwiftUI state, view identity, and cooperative cancellation using a real HTTP API. It displays Seafood recipes from [TheMealDB](https://www.themealdb.com/documentation), with initial loading, pull-to-refresh, local name search, empty results, retry, and a recipe detail screen.
 
@@ -8,7 +8,7 @@ An iPhone demo of SwiftUI state, view identity, and cooperative cancellation usi
 - Swift 6 language mode, complete concurrency checking, MainActor default isolation, and Approachable Concurrency.
 - iOS 26.0+, iPhone portrait. No third-party dependencies.
 
-Open `DemoMealRecipes.xcodeproj` and run the `DemoMealRecipes` scheme. Simulator builds do not require signing. For a device, copy `Config/Local.xcconfig.example` to the untracked `Config/Local.xcconfig` and set your development team.
+Open `DemoSeafoodRecipes.xcodeproj` and run the `DemoSeafoodRecipes` scheme. Simulator builds do not require signing. For a device, copy `Config/Local.xcconfig.example` to the untracked `Config/Local.xcconfig` and set your development team.
 
 ```sh
 make build
@@ -22,31 +22,31 @@ The default destination is iPhone 17 Pro. Override it with `SIMULATOR='device na
 
 | Type | Responsibility |
 | --- | --- |
-| `MealsView` | List, presentation, gestures, navigation, and ownership of work tied to the screen |
-| `MealsViewModel` | Observable list state, admission of requests, and state transitions |
-| `MealsState` | Initial loading/failure and loaded content with its refresh state |
-| `MealDetailView` | Recipe screen; owns a ViewModel in `@State` |
-| `MealDetailViewModel` | Single lookup, load/retry/cancel without refresh nesting |
-| `MealDetailState` | idle, loading, failed, loaded |
+| `SeafoodList` | List, presentation, gestures, navigation, and ownership of work tied to the screen |
+| `SeafoodListViewModel` | Observable list state, admission of requests, and state transitions |
+| `SeafoodListState` | Initial loading/failure and loaded content with its refresh state |
+| `SeafoodDetailView` | Recipe screen; owns a ViewModel in `@State` |
+| `SeafoodDetailViewModel` | Single lookup, load/retry/cancel without refresh nesting |
+| `SeafoodDetailState` | idle, loading, failed, loaded |
 | `MealService` | Typed-throwing list filter and meal lookup |
 | `MealAPIClient` | URLSession, HTTP validation, decoding, and error classification |
 | `Meal` | Immutable, Sendable list row with an API-provided identity |
 | `MealDetails` | Full recipe: ingredients, instructions, category, area |
 
-The feature is in `DemoMealRecipes/Source/Features/Meals/`. The application entry point keeps the production `MealAPIClient` and `MealsViewModel` in `@State` so scene updates reuse the same instances. Debug scenarios are in `Source/Application/MealScenarios.swift`; they use the same screen and ViewModel as the live application. The implementation plan is in `docs/implementation_plan.md`.
+The feature is in `DemoSeafoodRecipes/Source/Features/SeafoodList/` and `SeafoodDetails/`. The application entry point keeps the production `MealAPIClient` and `SeafoodListViewModel` in `@State` so scene updates reuse the same instances. Debug scenarios are in `Source/Application/SeafoodScenarios.swift`; they use the same screen and ViewModel as the live application.
 
 ## Observation and identity
 
-`MealsView` owns its `@MainActor @Observable` ViewModel in private `@State`. SwiftUI reconnects that state storage when it recreates a view value with the same identity. Initializers only assign dependencies; HTTP work begins in a view task.
+`SeafoodList` owns its `@MainActor @Observable` ViewModel in private `@State`. SwiftUI reconnects that state storage when it recreates a view value with the same identity. Initializers only assign dependencies; HTTP work begins in a view task.
 
-`MealsViewModel` imports Observation and has no SwiftUI dependency. Its state is externally read-only. The service and internal completion signals are implementation details; only screen state drives rendering.
+`SeafoodListViewModel` imports Observation and has no SwiftUI dependency. Its state is externally read-only. The service and internal completion signals are implementation details; only screen state drives rendering.
 
-Each row uses `idMeal` from the server and pushes a detail screen with `NavigationLink`. The List remains in the same structural position as loading, error, and content change. Refresh updates its collection without assigning a new identity to the List. Existing content remains visible until a successful replacement arrives. The production `MealAPIClient` is passed into `MealsView` so the destination can create `MealDetailView` without assembling HTTP in `body`.
+Each row uses `idMeal` from the server and pushes a detail screen with `NavigationLink`. The List remains in the same structural position as loading, error, and content change. Refresh updates its collection without assigning a new identity to the List. Existing content remains visible until a successful replacement arrives. The production `MealAPIClient` is passed into `SeafoodList` so the destination can create `SeafoodDetailView` without assembling HTTP in `body`.
 
 ## State transitions
 
 ```swift
-enum MealsState {
+enum SeafoodListState {
     case idle
     case loading
     case failed(MealAPIError)
@@ -69,7 +69,7 @@ A successful empty response is `loaded([])`. Refresh state is nested inside load
 
 Automatic appearance loads from idle. Loaded content, including an empty collection, does not trigger another request. A displayed failure requires explicit retry. Background/foreground transitions do not initiate fetching.
 
-Tapping a row loads `lookup.php?i=` on a new `MealDetailViewModel`. That screen uses idle / loading / failed / loaded only. There is no pull-to-refresh and no completion-waiter queue: SwiftUI cancels the view `.task` on pop, and a later push creates a new ViewModel. Retry uses the same `.task(id:)` one-shot pattern as the list. A successful lookup is not refetched on a later `.task` run with the same identity.
+Tapping a row loads `lookup.php?i=` on a new `SeafoodDetailViewModel`. That screen uses idle / loading / failed / loaded only. There is no pull-to-refresh and no completion-waiter queue: SwiftUI cancels the view `.task` on pop, and a later push creates a new ViewModel. Retry uses the same `.task(id:)` one-shot pattern as the list. A successful lookup is not refetched on a later `.task` run with the same identity.
 
 The list search field filters already loaded names locally (`localizedStandardContains`). It does not call the API. An empty filter result is distinct from an empty network response.
 
@@ -111,17 +111,17 @@ Swift Testing exercises the client through an injected ephemeral URLSession and 
 
 ViewModel tests use a controlled actor service that announces each request and waits for the test to provide a result. It deliberately permits a response after cancellation. Assertions cover state transitions, admission of overlapping calls, preservation of content, cancelled waiters, and rapid reentry. There are no timing sleeps or polling loops.
 
-XCTest UI tests exercise scrolling, pull-to-refresh, empty results, retry, failed refresh, and opening a recipe from the list. The Debug lifecycle host mounts/unmounts the actual MealsView while retaining its ViewModel and withholding service responses. It checks both cancellation paths, a return before cancellation settles, and parent updates preserving view identity. The initial-load host intentionally reports cancellation before a test explicitly completes the pending response. The refresh host unmounts the screen as soon as refresh starts and completes the cancelled request, allowing XCTest to finish the gesture. The failed-refresh fixture remains unavailable until the test explicitly restores the service, so recovery does not depend on the number of callbacks emitted by a gesture. Detail fixtures return a canned recipe for the selected row id.
+XCTest UI tests exercise scrolling, pull-to-refresh, empty results, retry, failed refresh, and opening a recipe from the list. The Debug lifecycle host mounts/unmounts the actual SeafoodList while retaining its ViewModel and withholding service responses. It checks both cancellation paths, a return before cancellation settles, and parent updates preserving view identity. The initial-load host intentionally reports cancellation before a test explicitly completes the pending response. The refresh host unmounts the screen as soon as refresh starts and completes the cancelled request, allowing XCTest to finish the gesture. The failed-refresh fixture remains unavailable until the test explicitly restores the service, so recovery does not depend on the number of callbacks emitted by a gesture. Detail fixtures return a canned recipe for the selected row id.
 
 To select a deterministic scenario, add launch arguments in the scheme:
 
 ```text
---meal-scenario success
---meal-scenario failure
---meal-scenario empty
---meal-scenario refreshFailure
---meal-scenario lifecycle
---meal-scenario refreshLifecycle
+--seafood-scenario success
+--seafood-scenario failure
+--seafood-scenario empty
+--seafood-scenario refreshFailure
+--seafood-scenario lifecycle
+--seafood-scenario refreshLifecycle
 ```
 
 Fixtures use local placeholders for images. Hosted unit tests select an offline scenario through the XCTest launch environment. Scenario code is compiled only in Debug. A normal launch uses the real API.

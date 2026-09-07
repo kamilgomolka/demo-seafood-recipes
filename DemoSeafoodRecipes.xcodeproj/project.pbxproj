@@ -12,14 +12,14 @@
 			containerPortal = 8E48DB7530384E7600DE107A /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 8E48DB7C30384E7600DE107A;
-			remoteInfo = DemoMealRecipes;
+			remoteInfo = DemoSeafoodRecipes;
 		};
 		8E48DB9E30384E7700DE107A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8E48DB7530384E7600DE107A /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 8E48DB7C30384E7600DE107A;
-			remoteInfo = DemoMealRecipes;
+			remoteInfo = DemoSeafoodRecipes;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -28,32 +28,32 @@
 		8E0AB8EC303C493E00F59357 /* ProjectDebug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = ProjectDebug.xcconfig; sourceTree = "<group>"; };
 		8E0AB8ED303C493E00F59357 /* ProjectRelease.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = ProjectRelease.xcconfig; sourceTree = "<group>"; };
 		8E0AB8EF303C493E00F59357 /* TargetBase.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetBase.xcconfig; sourceTree = "<group>"; };
-		8E0AB8F0303C493E00F59357 /* TargetDemoMealRecipes.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetDemoMealRecipes.xcconfig; sourceTree = "<group>"; };
-		8E0AB8F1303C493E00F59357 /* TargetDemoMealRecipesTests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetDemoMealRecipesTests.xcconfig; sourceTree = "<group>"; };
-		8E0AB8F2303C493E00F59357 /* TargetDemoMealRecipesUITests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetDemoMealRecipesUITests.xcconfig; sourceTree = "<group>"; };
-		8E48DB7D30384E7600DE107A /* DemoMealRecipes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DemoMealRecipes.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		8E48DB9330384E7700DE107A /* DemoMealRecipesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemoMealRecipesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		8E48DB9D30384E7700DE107A /* DemoMealRecipesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemoMealRecipesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8E0AB8F0303C493E00F59357 /* TargetDemoSeafoodRecipes.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetDemoSeafoodRecipes.xcconfig; sourceTree = "<group>"; };
+		8E0AB8F1303C493E00F59357 /* TargetDemoSeafoodRecipesTests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetDemoSeafoodRecipesTests.xcconfig; sourceTree = "<group>"; };
+		8E0AB8F2303C493E00F59357 /* TargetDemoSeafoodRecipesUITests.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = TargetDemoSeafoodRecipesUITests.xcconfig; sourceTree = "<group>"; };
+		8E48DB7D30384E7600DE107A /* DemoSeafoodRecipes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DemoSeafoodRecipes.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8E48DB9330384E7700DE107A /* DemoSeafoodRecipesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemoSeafoodRecipesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8E48DB9D30384E7700DE107A /* DemoSeafoodRecipesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DemoSeafoodRecipesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E8A18B43038522E001F4A1B /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		8E8A18B53038522E001F4A1B /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		8E8A18B63038522E001F4A1B /* DemoMealRecipes.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = DemoMealRecipes.xctestplan; sourceTree = "<group>"; };
+		8E8A18B63038522E001F4A1B /* DemoSeafoodRecipes.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = DemoSeafoodRecipes.xctestplan; sourceTree = "<group>"; };
 		8EB30835303CE25700A08CEB /* Local.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text; path = Local.xcconfig.example; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		8E48DB7F30384E7600DE107A /* DemoMealRecipes */ = {
+		8E48DB7F30384E7600DE107A /* DemoSeafoodRecipes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = DemoMealRecipes;
+			path = DemoSeafoodRecipes;
 			sourceTree = "<group>";
 		};
-		8E48DB9630384E7700DE107A /* DemoMealRecipesTests */ = {
+		8E48DB9630384E7700DE107A /* DemoSeafoodRecipesTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = DemoMealRecipesTests;
+			path = DemoSeafoodRecipesTests;
 			sourceTree = "<group>";
 		};
-		8E48DBA030384E7700DE107A /* DemoMealRecipesUITests */ = {
+		8E48DBA030384E7700DE107A /* DemoSeafoodRecipesUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = DemoMealRecipesUITests;
+			path = DemoSeafoodRecipesUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -97,9 +97,9 @@
 			isa = PBXGroup;
 			children = (
 				8E0AB8EF303C493E00F59357 /* TargetBase.xcconfig */,
-				8E0AB8F0303C493E00F59357 /* TargetDemoMealRecipes.xcconfig */,
-				8E0AB8F1303C493E00F59357 /* TargetDemoMealRecipesTests.xcconfig */,
-				8E0AB8F2303C493E00F59357 /* TargetDemoMealRecipesUITests.xcconfig */,
+				8E0AB8F0303C493E00F59357 /* TargetDemoSeafoodRecipes.xcconfig */,
+				8E0AB8F1303C493E00F59357 /* TargetDemoSeafoodRecipesTests.xcconfig */,
+				8E0AB8F2303C493E00F59357 /* TargetDemoSeafoodRecipesUITests.xcconfig */,
 			);
 			path = Target;
 			sourceTree = "<group>";
@@ -118,12 +118,12 @@
 			isa = PBXGroup;
 			children = (
 				8E0AB8F4303C493E00F59357 /* Config */,
-				8E48DB7F30384E7600DE107A /* DemoMealRecipes */,
-				8E48DB9630384E7700DE107A /* DemoMealRecipesTests */,
-				8E48DBA030384E7700DE107A /* DemoMealRecipesUITests */,
+				8E48DB7F30384E7600DE107A /* DemoSeafoodRecipes */,
+				8E48DB9630384E7700DE107A /* DemoSeafoodRecipesTests */,
+				8E48DBA030384E7700DE107A /* DemoSeafoodRecipesUITests */,
 				8E8A18B43038522E001F4A1B /* LICENSE */,
 				8E8A18B53038522E001F4A1B /* README.md */,
-				8E8A18B63038522E001F4A1B /* DemoMealRecipes.xctestplan */,
+				8E8A18B63038522E001F4A1B /* DemoSeafoodRecipes.xctestplan */,
 				8E48DB7E30384E7600DE107A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -131,9 +131,9 @@
 		8E48DB7E30384E7600DE107A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8E48DB7D30384E7600DE107A /* DemoMealRecipes.app */,
-				8E48DB9330384E7700DE107A /* DemoMealRecipesTests.xctest */,
-				8E48DB9D30384E7700DE107A /* DemoMealRecipesUITests.xctest */,
+				8E48DB7D30384E7600DE107A /* DemoSeafoodRecipes.app */,
+				8E48DB9330384E7700DE107A /* DemoSeafoodRecipesTests.xctest */,
+				8E48DB9D30384E7700DE107A /* DemoSeafoodRecipesUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -141,9 +141,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		8E48DB7C30384E7600DE107A /* DemoMealRecipes */ = {
+		8E48DB7C30384E7600DE107A /* DemoSeafoodRecipes */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8E48DBA630384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoMealRecipes" */;
+			buildConfigurationList = 8E48DBA630384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoSeafoodRecipes" */;
 			buildPhases = (
 				8EFDFF193041ACAD007B1751 /* ShellScript */,
 				8E48DB7930384E7600DE107A /* Sources */,
@@ -155,18 +155,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				8E48DB7F30384E7600DE107A /* DemoMealRecipes */,
+				8E48DB7F30384E7600DE107A /* DemoSeafoodRecipes */,
 			);
-			name = DemoMealRecipes;
+			name = DemoSeafoodRecipes;
 			packageProductDependencies = (
 			);
-			productName = DemoMealRecipes;
-			productReference = 8E48DB7D30384E7600DE107A /* DemoMealRecipes.app */;
+			productName = DemoSeafoodRecipes;
+			productReference = 8E48DB7D30384E7600DE107A /* DemoSeafoodRecipes.app */;
 			productType = "com.apple.product-type.application";
 		};
-		8E48DB9230384E7700DE107A /* DemoMealRecipesTests */ = {
+		8E48DB9230384E7700DE107A /* DemoSeafoodRecipesTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8E48DBAB30384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoMealRecipesTests" */;
+			buildConfigurationList = 8E48DBAB30384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoSeafoodRecipesTests" */;
 			buildPhases = (
 				8E48DB8F30384E7700DE107A /* Sources */,
 				8E48DB9030384E7700DE107A /* Frameworks */,
@@ -178,18 +178,18 @@
 				8E48DB9530384E7700DE107A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				8E48DB9630384E7700DE107A /* DemoMealRecipesTests */,
+				8E48DB9630384E7700DE107A /* DemoSeafoodRecipesTests */,
 			);
-			name = DemoMealRecipesTests;
+			name = DemoSeafoodRecipesTests;
 			packageProductDependencies = (
 			);
-			productName = DemoMealRecipesTests;
-			productReference = 8E48DB9330384E7700DE107A /* DemoMealRecipesTests.xctest */;
+			productName = DemoSeafoodRecipesTests;
+			productReference = 8E48DB9330384E7700DE107A /* DemoSeafoodRecipesTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		8E48DB9C30384E7700DE107A /* DemoMealRecipesUITests */ = {
+		8E48DB9C30384E7700DE107A /* DemoSeafoodRecipesUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 8E48DBAE30384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoMealRecipesUITests" */;
+			buildConfigurationList = 8E48DBAE30384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoSeafoodRecipesUITests" */;
 			buildPhases = (
 				8E48DB9930384E7700DE107A /* Sources */,
 				8E48DB9A30384E7700DE107A /* Frameworks */,
@@ -201,13 +201,13 @@
 				8E48DB9F30384E7700DE107A /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				8E48DBA030384E7700DE107A /* DemoMealRecipesUITests */,
+				8E48DBA030384E7700DE107A /* DemoSeafoodRecipesUITests */,
 			);
-			name = DemoMealRecipesUITests;
+			name = DemoSeafoodRecipesUITests;
 			packageProductDependencies = (
 			);
-			productName = DemoMealRecipesUITests;
-			productReference = 8E48DB9D30384E7700DE107A /* DemoMealRecipesUITests.xctest */;
+			productName = DemoSeafoodRecipesUITests;
+			productReference = 8E48DB9D30384E7700DE107A /* DemoSeafoodRecipesUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -233,7 +233,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 8E48DB7830384E7600DE107A /* Build configuration list for PBXProject "DemoMealRecipes" */;
+			buildConfigurationList = 8E48DB7830384E7600DE107A /* Build configuration list for PBXProject "DemoSeafoodRecipes" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -247,9 +247,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				8E48DB7C30384E7600DE107A /* DemoMealRecipes */,
-				8E48DB9230384E7700DE107A /* DemoMealRecipesTests */,
-				8E48DB9C30384E7700DE107A /* DemoMealRecipesUITests */,
+				8E48DB7C30384E7600DE107A /* DemoSeafoodRecipes */,
+				8E48DB9230384E7700DE107A /* DemoSeafoodRecipesTests */,
+				8E48DB9C30384E7700DE107A /* DemoSeafoodRecipesUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -326,12 +326,12 @@
 /* Begin PBXTargetDependency section */
 		8E48DB9530384E7700DE107A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 8E48DB7C30384E7600DE107A /* DemoMealRecipes */;
+			target = 8E48DB7C30384E7600DE107A /* DemoSeafoodRecipes */;
 			targetProxy = 8E48DB9430384E7700DE107A /* PBXContainerItemProxy */;
 		};
 		8E48DB9F30384E7700DE107A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 8E48DB7C30384E7600DE107A /* DemoMealRecipes */;
+			target = 8E48DB7C30384E7600DE107A /* DemoSeafoodRecipes */;
 			targetProxy = 8E48DB9E30384E7700DE107A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -339,7 +339,7 @@
 /* Begin XCBuildConfiguration section */
 		8E48DBA730384E7700DE107A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8E0AB8F0303C493E00F59357 /* TargetDemoMealRecipes.xcconfig */;
+			baseConfigurationReference = 8E0AB8F0303C493E00F59357 /* TargetDemoSeafoodRecipes.xcconfig */;
 			buildSettings = {
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -352,7 +352,7 @@
 		};
 		8E48DBA830384E7700DE107A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8E0AB8F0303C493E00F59357 /* TargetDemoMealRecipes.xcconfig */;
+			baseConfigurationReference = 8E0AB8F0303C493E00F59357 /* TargetDemoSeafoodRecipes.xcconfig */;
 			buildSettings = {
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -484,7 +484,7 @@
 		};
 		8E48DBAC30384E7700DE107A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8E0AB8F1303C493E00F59357 /* TargetDemoMealRecipesTests.xcconfig */;
+			baseConfigurationReference = 8E0AB8F1303C493E00F59357 /* TargetDemoSeafoodRecipesTests.xcconfig */;
 			buildSettings = {
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -493,7 +493,7 @@
 		};
 		8E48DBAD30384E7700DE107A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8E0AB8F1303C493E00F59357 /* TargetDemoMealRecipesTests.xcconfig */;
+			baseConfigurationReference = 8E0AB8F1303C493E00F59357 /* TargetDemoSeafoodRecipesTests.xcconfig */;
 			buildSettings = {
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -502,7 +502,7 @@
 		};
 		8E48DBAF30384E7700DE107A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8E0AB8F2303C493E00F59357 /* TargetDemoMealRecipesUITests.xcconfig */;
+			baseConfigurationReference = 8E0AB8F2303C493E00F59357 /* TargetDemoSeafoodRecipesUITests.xcconfig */;
 			buildSettings = {
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -511,7 +511,7 @@
 		};
 		8E48DBB030384E7700DE107A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8E0AB8F2303C493E00F59357 /* TargetDemoMealRecipesUITests.xcconfig */;
+			baseConfigurationReference = 8E0AB8F2303C493E00F59357 /* TargetDemoSeafoodRecipesUITests.xcconfig */;
 			buildSettings = {
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -521,7 +521,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		8E48DB7830384E7600DE107A /* Build configuration list for PBXProject "DemoMealRecipes" */ = {
+		8E48DB7830384E7600DE107A /* Build configuration list for PBXProject "DemoSeafoodRecipes" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8E48DBA930384E7700DE107A /* Debug */,
@@ -530,7 +530,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8E48DBA630384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoMealRecipes" */ = {
+		8E48DBA630384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoSeafoodRecipes" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8E48DBA730384E7700DE107A /* Debug */,
@@ -539,7 +539,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8E48DBAB30384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoMealRecipesTests" */ = {
+		8E48DBAB30384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoSeafoodRecipesTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8E48DBAC30384E7700DE107A /* Debug */,
@@ -548,7 +548,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		8E48DBAE30384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoMealRecipesUITests" */ = {
+		8E48DBAE30384E7700DE107A /* Build configuration list for PBXNativeTarget "DemoSeafoodRecipesUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				8E48DBAF30384E7700DE107A /* Debug */,

@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import DemoMealRecipes
+@testable import DemoSeafoodRecipes
 
 @Suite(.timeLimit(.minutes(1)))
 struct MealAPIClientTests {

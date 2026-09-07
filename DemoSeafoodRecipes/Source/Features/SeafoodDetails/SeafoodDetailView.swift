@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct MealRemoteImage: View {
+struct SeafoodRemoteImage: View {
     let url: URL?
 
     var body: some View {
@@ -26,15 +26,15 @@ struct MealRemoteImage: View {
     }
 }
 
-struct MealDetailView: View {
-    @State private var viewModel: MealDetailViewModel
+struct SeafoodDetailView: View {
+    @State private var viewModel: SeafoodDetailViewModel
     @State private var retryCount = 0
     @State private var retryRequested = false
     private let title: String
 
     init(meal: Meal, service: any MealService) {
         title = meal.name
-        _viewModel = State(initialValue: MealDetailViewModel(mealID: meal.id, service: service))
+        _viewModel = State(initialValue: SeafoodDetailViewModel(mealID: meal.id, service: service))
     }
 
     var body: some View {
@@ -48,7 +48,7 @@ struct MealDetailView: View {
                 loadedView(details)
             }
         }
-        .accessibilityIdentifier("meal.detail")
+        .accessibilityIdentifier("seafood.detail")
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .task(id: retryCount) {
@@ -64,7 +64,7 @@ struct MealDetailView: View {
     private var loadingView: some View {
         ProgressView("Loading recipe…")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .accessibilityIdentifier("meal.detail.loading")
+            .accessibilityIdentifier("seafood.detail.loading")
     }
 
     private func errorView(_ error: MealAPIError) -> some View {
@@ -84,26 +84,26 @@ struct MealDetailView: View {
         }
         .buttonStyle(.bordered)
         .disabled(viewModel.state.isLoading)
-        .accessibilityIdentifier("meal.detail.retry")
+        .accessibilityIdentifier("seafood.detail.retry")
     }
 
     private func loadedView(_ details: MealDetails) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                MealRemoteImage(url: details.thumbnailURL)
+                SeafoodRemoteImage(url: details.thumbnailURL)
                     .frame(maxWidth: .infinity)
                     .frame(height: 240)
                     .clipped()
                     .accessibilityHidden(true)
 
-                mealHeaderView(details)
+                seafoodHeaderView(details)
                 ingredientsView(details)
                 instructionsView(details)
             }
         }
     }
 
-    private func mealHeaderView(_ details: MealDetails) -> some View {
+    private func seafoodHeaderView(_ details: MealDetails) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(details.name)
                 .font(.title2)

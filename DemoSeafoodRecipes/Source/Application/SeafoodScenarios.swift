@@ -3,7 +3,7 @@
     import Observation
     import SwiftUI
 
-    enum MealScenario: String {
+    enum SeafoodScenario: String {
         case success
         case failure
         case empty
@@ -11,10 +11,10 @@
         case lifecycle
         case refreshLifecycle
 
-        static var launchScenario: MealScenario? {
+        static var launchScenario: SeafoodScenario? {
             let arguments = ProcessInfo.processInfo.arguments
-            if let index = arguments.firstIndex(of: "--meal-scenario"), arguments.indices.contains(index + 1) {
-                return MealScenario(rawValue: arguments[index + 1])
+            if let index = arguments.firstIndex(of: "--seafood-scenario"), arguments.indices.contains(index + 1) {
+                return SeafoodScenario(rawValue: arguments[index + 1])
             }
             if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
                 return .success
@@ -25,14 +25,14 @@
 
     @MainActor
     @Observable
-    final class ScenarioMealService: MealService {
+    final class ScenarioSeafoodService: MealService {
         private(set) var requestCount = 0
         private(set) var cancellationCount = 0
-        private let scenario: MealScenario
+        private let scenario: SeafoodScenario
         @ObservationIgnored private var pending: CheckedContinuation<[Meal], Never>?
         @ObservationIgnored private var hasRecovered = false
 
-        init(scenario: MealScenario) {
+        init(scenario: SeafoodScenario) {
             self.scenario = scenario
         }
 
@@ -52,7 +52,7 @@
             case .refreshLifecycle where requestCount == 2:
                 return await waitForCompletion()
             default:
-                return Self.meals(batch: requestCount)
+                return Self.seafood(batch: requestCount)
             }
         }
 
@@ -63,7 +63,7 @@
         }
 
         func completePendingRequest() {
-            pending?.resume(returning: Self.meals(batch: requestCount))
+            pending?.resume(returning: Self.seafood(batch: requestCount))
             pending = nil
         }
 
@@ -84,7 +84,7 @@
             }
         }
 
-        private static func meals(batch: Int) -> [Meal] {
+        private static func seafood(batch: Int) -> [Meal] {
             let prefix = batch == 1 ? "Original" : "Updated"
             return (1...30).map { index in
                 Meal(id: String(index), name: "\(prefix) seafood \(index)", thumbnailURL: nil)
@@ -106,17 +106,17 @@
         }
     }
 
-    struct MealScenarioRoot: View {
-        @State private var service: ScenarioMealService
-        @State private var viewModel: MealsViewModel
+    struct SeafoodScenarioRoot: View {
+        @State private var service: ScenarioSeafoodService
+        @State private var viewModel: SeafoodListViewModel
         @State private var isVisible = true
         @State private var parentRevision = 0
-        private let scenario: MealScenario
+        private let scenario: SeafoodScenario
 
-        init(scenario: MealScenario) {
-            let service = ScenarioMealService(scenario: scenario)
+        init(scenario: SeafoodScenario) {
+            let service = ScenarioSeafoodService(scenario: scenario)
             _service = State(initialValue: service)
-            _viewModel = State(initialValue: MealsViewModel(service: service))
+            _viewModel = State(initialValue: SeafoodListViewModel(service: service))
             self.scenario = scenario
         }
 
@@ -140,7 +140,7 @@
                     .padding(.horizontal)
                 }
                 if isVisible {
-                    MealsView(viewModel: viewModel, service: service)
+                    SeafoodList(viewModel: viewModel, service: service)
                 } else {
                     Color.clear
                 }
@@ -165,19 +165,19 @@
 
     #Preview("Recipes") {
         NavigationStack {
-            MealScenarioRoot(scenario: .success)
+            SeafoodScenarioRoot(scenario: .success)
         }
     }
 
     #Preview("Empty") {
         NavigationStack {
-            MealScenarioRoot(scenario: .empty)
+            SeafoodScenarioRoot(scenario: .empty)
         }
     }
 
     #Preview("Failure") {
         NavigationStack {
-            MealScenarioRoot(scenario: .failure)
+            SeafoodScenarioRoot(scenario: .failure)
         }
     }
 #endif

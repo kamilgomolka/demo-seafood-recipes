@@ -1,10 +1,10 @@
 import Testing
 
-@testable import DemoMealRecipes
+@testable import DemoSeafoodRecipes
 
 @Suite(.timeLimit(.minutes(1)))
 @MainActor
-struct MealDetailViewModelTests {
+struct SeafoodDetailViewModelTests {
     private let details = MealDetails(
         id: "52772",
         name: "Teriyaki Chicken",
@@ -17,7 +17,7 @@ struct MealDetailViewModelTests {
     @Test func initialLoadAndRepeatedAppearance() async throws {
         let service = ControlledMealService()
         var requests = service.mealDetailRequests.makeAsyncIterator()
-        let model = MealDetailViewModel(mealID: "52772", service: service)
+        let model = SeafoodDetailViewModel(mealID: "52772", service: service)
         let load = Task { await model.loadIfNeeded() }
         _ = try #require(await requests.next())
         guard case .loading = model.state else {
@@ -40,7 +40,7 @@ struct MealDetailViewModelTests {
     @Test func failureRequiresExplicitRetry() async throws {
         let service = ControlledMealService()
         var requests = service.mealDetailRequests.makeAsyncIterator()
-        let model = MealDetailViewModel(mealID: "52772", service: service)
+        let model = SeafoodDetailViewModel(mealID: "52772", service: service)
         let load = Task { await model.loadIfNeeded() }
         _ = try #require(await requests.next())
         await service.completeDetail(1, with: .failure(.notFound))
@@ -64,7 +64,7 @@ struct MealDetailViewModelTests {
     @Test func cancellationDiscardsLateSuccess() async throws {
         let service = ControlledMealService()
         var requests = service.mealDetailRequests.makeAsyncIterator()
-        let model = MealDetailViewModel(mealID: "52772", service: service)
+        let model = SeafoodDetailViewModel(mealID: "52772", service: service)
         let load = Task { await model.loadIfNeeded() }
         _ = try #require(await requests.next())
         load.cancel()

@@ -13,31 +13,31 @@
     "codeCoverage" : {
       "targets" : [
         {
-          "containerPath" : "container:DemoMealRecipes.xcodeproj",
+          "containerPath" : "container:DemoSeafoodRecipes.xcodeproj",
           "identifier" : "8E48DB7C30384E7600DE107A",
-          "name" : "DemoMealRecipes"
+          "name" : "DemoSeafoodRecipes"
         }
       ]
     },
     "targetForVariableExpansion" : {
-      "containerPath" : "container:DemoMealRecipes.xcodeproj",
+      "containerPath" : "container:DemoSeafoodRecipes.xcodeproj",
       "identifier" : "8E48DB7C30384E7600DE107A",
-      "name" : "DemoMealRecipes"
+      "name" : "DemoSeafoodRecipes"
     }
   },
   "testTargets" : [
     {
       "target" : {
-        "containerPath" : "container:DemoMealRecipes.xcodeproj",
+        "containerPath" : "container:DemoSeafoodRecipes.xcodeproj",
         "identifier" : "8E48DB9230384E7700DE107A",
-        "name" : "DemoMealRecipesTests"
+        "name" : "DemoSeafoodRecipesTests"
       }
     },
     {
       "target" : {
-        "containerPath" : "container:DemoMealRecipes.xcodeproj",
+        "containerPath" : "container:DemoSeafoodRecipes.xcodeproj",
         "identifier" : "8E48DB9C30384E7700DE107A",
-        "name" : "DemoMealRecipesUITests"
+        "name" : "DemoSeafoodRecipesUITests"
       }
     }
   ],

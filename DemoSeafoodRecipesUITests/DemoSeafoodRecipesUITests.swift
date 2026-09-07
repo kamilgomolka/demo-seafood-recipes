@@ -1,6 +1,6 @@
 import XCTest
 
-final class DemoMealRecipesUITests: XCTestCase {
+final class DemoSeafoodRecipesUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -10,7 +10,7 @@ final class DemoMealRecipesUITests: XCTestCase {
     func testListScrollsAndRefreshes() {
         let app = launch("success")
         XCTAssertTrue(app.staticTexts["Original seafood 1"].waitForExistence(timeout: 5))
-        let list = app.collectionViews["meals.list"]
+        let list = app.collectionViews["seafood.list"]
         list.swipeUp()
         XCTAssertFalse(app.staticTexts["Original seafood 1"].isHittable)
         list.swipeDown()
@@ -22,8 +22,8 @@ final class DemoMealRecipesUITests: XCTestCase {
     @MainActor
     func testRecipeDetailOpensFromList() {
         let app = launch("success")
-        XCTAssertTrue(app.descendants(matching: .any)["meal.1"].firstMatch.waitForExistence(timeout: 5))
-        app.descendants(matching: .any)["meal.1"].firstMatch.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["seafood.1"].firstMatch.waitForExistence(timeout: 5))
+        app.descendants(matching: .any)["seafood.1"].firstMatch.tap()
         XCTAssertTrue(app.staticTexts["Simmer the seafood until cooked through."].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["• Salmon"].waitForExistence(timeout: 5))
     }
@@ -43,7 +43,7 @@ final class DemoMealRecipesUITests: XCTestCase {
     @MainActor
     func testFailureCanBeRetried() {
         let app = launch("failure")
-        let retry = app.buttons["meals.retry"]
+        let retry = app.buttons["seafood.retry"]
         XCTAssertTrue(retry.waitForExistence(timeout: 5))
         retry.tap()
         XCTAssertTrue(app.staticTexts["Updated seafood 1"].waitForExistence(timeout: 5))
@@ -63,7 +63,7 @@ final class DemoMealRecipesUITests: XCTestCase {
         let app = launch("refreshFailure")
         XCTAssertTrue(app.staticTexts["Original seafood 1"].waitForExistence(timeout: 5))
         pullToRefresh(app)
-        let retry = app.buttons["meals.retry"]
+        let retry = app.buttons["seafood.retry"]
         XCTAssertTrue(retry.waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Original seafood 1"].exists)
         app.buttons["scenario.recover"].tap()
@@ -110,14 +110,14 @@ final class DemoMealRecipesUITests: XCTestCase {
     @MainActor
     private func launch(_ scenario: String) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["--meal-scenario", scenario]
+        app.launchArguments = ["--seafood-scenario", scenario]
         app.launch()
         return app
     }
 
     @MainActor
     private func pullToRefresh(_ app: XCUIApplication) {
-        let list = app.collectionViews["meals.list"]
+        let list = app.collectionViews["seafood.list"]
         let start = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
         let end = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
         start.press(forDuration: 0.1, thenDragTo: end)

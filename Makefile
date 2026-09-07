@@ -1,9 +1,9 @@
-PROJECT := DemoMealRecipes.xcodeproj
-SCHEME := DemoMealRecipes
+PROJECT := DemoSeafoodRecipes.xcodeproj
+SCHEME := DemoSeafoodRecipes
 SIMULATOR ?= iPhone 17 Pro
 DESTINATION := platform=iOS Simulator,name=$(SIMULATOR),OS=latest
 RESULT_BUNDLE := TestResults.xcresult
-SWIFT_SOURCES := DemoMealRecipes DemoMealRecipesTests DemoMealRecipesUITests
+SWIFT_SOURCES := DemoSeafoodRecipes DemoSeafoodRecipesTests DemoSeafoodRecipesUITests
 
 .PHONY: build test destinations format lint clean
 

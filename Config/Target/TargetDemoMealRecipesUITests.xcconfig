@@ -1,3 +1,0 @@
-#include "TargetBase.xcconfig"
-
-TEST_TARGET_NAME = DemoMealRecipes

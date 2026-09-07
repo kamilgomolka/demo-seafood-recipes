@@ -1,23 +1,23 @@
 import SwiftUI
 
-struct MealsView: View {
-    @State private var viewModel: MealsViewModel
+struct SeafoodList: View {
+    @State private var viewModel: SeafoodListViewModel
     @State private var retryCount = 0
     @State private var retryRequested = false
     @State private var refreshTask: Task<Void, Never>?
     @State private var searchText = ""
     private let service: any MealService
 
-    init(viewModel: MealsViewModel, service: any MealService) {
+    init(viewModel: SeafoodListViewModel, service: any MealService) {
         _viewModel = State(initialValue: viewModel)
         self.service = service
     }
 
     var body: some View {
-        List(viewModel.meals(matching: searchText)) { meal in
+        List(viewModel.seafood(matching: searchText)) { meal in
             NavigationLink(value: meal) {
                 HStack(spacing: 16) {
-                    MealRemoteImage(url: meal.thumbnailURL)
+                    SeafoodRemoteImage(url: meal.thumbnailURL)
                         .frame(width: 64, height: 64)
                         .clipShape(.rect(cornerRadius: 12))
                         .accessibilityHidden(true)
@@ -27,15 +27,15 @@ struct MealsView: View {
                         .padding(.vertical, 8)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityIdentifier("meal.\(meal.id)")
+                .accessibilityIdentifier("seafood.\(meal.id)")
             }
             .buttonStyle(.plain)
         }
         .navigationDestination(for: Meal.self) { meal in
-            MealDetailView(meal: meal, service: service)
+            SeafoodDetailView(meal: meal, service: service)
         }
         .listStyle(.plain)
-        .accessibilityIdentifier("meals.list")
+        .accessibilityIdentifier("seafood.list")
         .overlay {
             switch viewModel.state {
             case .idle, .loading:
@@ -44,7 +44,7 @@ struct MealsView: View {
                 errorView(error)
             case .loaded(let meals, _) where meals.isEmpty:
                 emptyView
-            case .loaded where viewModel.meals(matching: searchText).isEmpty:
+            case .loaded where viewModel.seafood(matching: searchText).isEmpty:
                 searchEmptyView
             case .loaded:
                 EmptyView()
@@ -57,7 +57,7 @@ struct MealsView: View {
                     .padding()
                     .background(.bar)
                     .accessibilityElement(children: .contain)
-                    .accessibilityIdentifier("meals.refreshError")
+                    .accessibilityIdentifier("seafood.refreshError")
             }
         }
         .navigationTitle("Seafood recipes")
@@ -80,7 +80,7 @@ struct MealsView: View {
 
     private var loadingView: some View {
         ProgressView("Loading recipes…")
-            .accessibilityIdentifier("meals.loading")
+            .accessibilityIdentifier("seafood.loading")
             .allowsHitTesting(false)
     }
 
@@ -93,13 +93,13 @@ struct MealsView: View {
 
     private var emptyView: some View {
         ContentUnavailableView("No recipes", systemImage: "fork.knife", description: Text("Pull to try again."))
-            .accessibilityIdentifier("meals.empty")
+            .accessibilityIdentifier("seafood.empty")
             .allowsHitTesting(false)
     }
 
     private var searchEmptyView: some View {
         ContentUnavailableView.search
-            .accessibilityIdentifier("meals.searchEmpty")
+            .accessibilityIdentifier("seafood.searchEmpty")
             .allowsHitTesting(false)
     }
 
@@ -110,7 +110,7 @@ struct MealsView: View {
         }
         .buttonStyle(.bordered)
         .disabled(viewModel.state.isLoading)
-        .accessibilityIdentifier("meals.retry")
+        .accessibilityIdentifier("seafood.retry")
     }
 
     private func refresh() async {
