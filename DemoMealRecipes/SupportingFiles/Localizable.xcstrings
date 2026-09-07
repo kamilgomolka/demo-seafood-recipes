@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "(%@)" : {
+
+    },
     "%@ · %@" : {
       "localizations" : {
         "en" : {
@@ -11,16 +14,19 @@
         }
       }
     },
+    "• %@" : {
+
+    },
+    "📖 Instructions" : {
+
+    },
+    "🛒 Ingredients" : {
+
+    },
     "Couldn't load recipe" : {
 
     },
     "Couldn't load recipes" : {
-
-    },
-    "Ingredients" : {
-
-    },
-    "Instructions" : {
 
     },
     "Loading recipe…" : {

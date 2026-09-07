@@ -105,28 +105,32 @@ struct MealDetailView: View {
                 .padding(.horizontal)
 
                 if !details.ingredients.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Ingredients")
-                            .font(.headline)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("🛒 Ingredients")
+                            .font(.title3).bold()
                         ForEach(Array(details.ingredients.enumerated()), id: \.offset) { _, ingredient in
                             HStack(alignment: .top) {
-                                Text(ingredient.measure)
+                                Text("• \(ingredient.name)")
+                                    .font(.subheadline)
+                                    .frame(alignment: .leading)
+                                    .padding(.leading, 4.0)
+                                Text("(\(ingredient.measure))")
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
-                                    .frame(minWidth: 72, alignment: .leading)
-                                Text(ingredient.name)
                             }
                         }
                     }
+                    .padding(.top)
                     .padding(.horizontal)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Instructions")
-                        .font(.headline)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("📖 Instructions")
+                        .font(.title3).bold()
                     Text(details.instructions)
+                        .padding(.leading, 4.0)
                 }
-                .padding(.horizontal)
-                .padding(.bottom)
+                .padding()
             }
         }
     }
