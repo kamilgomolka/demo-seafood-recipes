@@ -5,7 +5,7 @@ nonisolated protocol MealService: Sendable {
     func fetchMeal(id: String) async throws(MealAPIError) -> MealDetails
 }
 
-nonisolated enum MealAPIError: Error {
+nonisolated enum MealAPIError: Error, Equatable {
     case transport(any Error)
     case invalidResponse
     case httpStatus(Int)
@@ -13,8 +13,23 @@ nonisolated enum MealAPIError: Error {
     case notFound
     case cancelled
 
+    static func == (lhs: MealAPIError, rhs: MealAPIError) -> Bool {
+        switch (lhs, rhs) {
+        case (.transport, .transport),
+            (.invalidResponse, .invalidResponse),
+            (.decoding, .decoding),
+            (.notFound, .notFound),
+            (.cancelled, .cancelled):
+            true
+        case (.httpStatus(let lhsStatus), .httpStatus(let rhsStatus)):
+            lhsStatus == rhsStatus
+        default:
+            false
+        }
+    }
+
     var isCancelled: Bool {
-        if case .cancelled = self { true } else { false }
+        self == .cancelled
     }
 
     var message: String {

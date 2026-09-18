@@ -4,7 +4,6 @@ struct SeafoodList: View {
     @State private var viewModel: SeafoodListViewModel
     @State private var retryCount = 0
     @State private var retryRequested = false
-    @State private var refreshTask: Task<Void, Never>?
     @State private var searchText = ""
     private let service: any MealService
 
@@ -71,10 +70,7 @@ struct SeafoodList: View {
             }
         }
         .refreshable {
-            await refresh()
-        }
-        .onDisappear {
-            refreshTask?.cancel()
+            await viewModel.reload()
         }
     }
 
@@ -113,19 +109,4 @@ struct SeafoodList: View {
         .accessibilityIdentifier("seafood.retry")
     }
 
-    private func refresh() async {
-        guard !Task.isCancelled, refreshTask == nil else { return }
-        let task = Task { await viewModel.reload() }
-        refreshTask = task
-        defer {
-            if refreshTask == task {
-                refreshTask = nil
-            }
-        }
-        await withTaskCancellationHandler {
-            await task.value
-        } onCancel: {
-            task.cancel()
-        }
-    }
 }
