@@ -1,6 +1,11 @@
 import Foundation
 import Observation
 
+private struct CompletionWaiter {
+    let id: UUID
+    let continuation: CheckedContinuation<Void, Never>
+}
+
 enum SeafoodListState {
     case idle
     case loading
@@ -27,7 +32,7 @@ final class SeafoodListViewModel {
     private(set) var state: SeafoodListState = .idle
 
     private let service: any MealService
-    @ObservationIgnored private var completionWaiters: [CheckedContinuation<Void, Never>] = []
+    @ObservationIgnored private var completionWaiters: [CompletionWaiter] = []
 
     init(service: any MealService) {
         self.service = service
@@ -87,17 +92,18 @@ final class SeafoodListViewModel {
     }
 
     private func waitForInFlightLoad() async {
+        let waiterID = UUID()
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 if Task.isCancelled {
                     continuation.resume()
                     return
                 }
-                completionWaiters.append(continuation)
+                completionWaiters.append(CompletionWaiter(id: waiterID, continuation: continuation))
             }
         } onCancel: {
             Task { @MainActor in
-                self.resumeCompletionWaiters()
+                self.resumeCompletionWaiter(id: waiterID)
             }
         }
     }
@@ -105,7 +111,13 @@ final class SeafoodListViewModel {
     private func resumeCompletionWaiters() {
         let waiters = completionWaiters
         completionWaiters.removeAll()
-        waiters.forEach { $0.resume() }
+        waiters.forEach { $0.continuation.resume() }
+    }
+
+    private func resumeCompletionWaiter(id: UUID) {
+        guard let index = completionWaiters.firstIndex(where: { $0.id == id }) else { return }
+        let waiter = completionWaiters.remove(at: index)
+        waiter.continuation.resume()
     }
 
     private func restoreAfterCancellation(previousSeafood: [Meal]?) {
