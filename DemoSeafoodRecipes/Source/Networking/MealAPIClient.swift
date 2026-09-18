@@ -35,7 +35,7 @@ nonisolated enum MealAPIError: Error {
 
 nonisolated struct MealAPIClient: MealService {
     private static let filterURL = "https://www.themealdb.com/api/json/v1/1/filter.php?c=Seafood"
-    private static let lookupURL = "https://www.themealdb.com/api/json/v1/1/lookup.php?i="
+    private static let lookupURL = "https://www.themealdb.com/api/json/v1/1/lookup.php"
 
     private let session: URLSession
 
@@ -52,8 +52,11 @@ nonisolated struct MealAPIClient: MealService {
 
     @concurrent
     func fetchMeal(id: String) async throws(MealAPIError) -> MealDetails {
-        let encodedID = id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? id
-        let meals = try await decode(LookupResponse.self, from: Self.lookupURL + encodedID).meals ?? []
+        var components = URLComponents(string: Self.lookupURL)
+        components?.queryItems = [URLQueryItem(name: "i", value: id)]
+        guard let url = components?.url else { throw MealAPIError.invalidResponse }
+
+        let meals = try await decode(LookupResponse.self, from: url).meals ?? []
         try throwIfCancelled()
         guard let meal = meals.first else { throw MealAPIError.notFound }
         return meal.details
@@ -63,6 +66,10 @@ nonisolated struct MealAPIClient: MealService {
         -> Value
     {
         guard let url = URL(string: urlString) else { throw MealAPIError.invalidResponse }
+        return try await decode(type, from: url)
+    }
+
+    private func decode<Value: Decodable>(_ type: Value.Type, from url: URL) async throws(MealAPIError) -> Value {
         let body = try await loadData(from: url)
         do {
             return try JSONDecoder().decode(type, from: body)

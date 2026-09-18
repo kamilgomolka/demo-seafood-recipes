@@ -64,6 +64,29 @@ struct MealAPIClientTests {
         #expect(request.url?.absoluteString == "https://www.themealdb.com/api/json/v1/1/lookup.php?i=52772")
     }
 
+    @Test func lookupRequestUsesQueryItemForMealID() async throws {
+        let fixture = MealHTTPFixture(
+            .http(
+                200,
+                """
+                {"meals":[{
+                  "idMeal":"52772&extra=value+plus",
+                  "strMeal":"Salmon",
+                  "strInstructions":"Bake.",
+                  "strMealThumb":"https://example.com/salmon.jpg"
+                }]}
+                """))
+        defer { fixture.close() }
+
+        _ = try await MealAPIClient(session: fixture.session).fetchMeal(id: "52772&extra=value+plus")
+
+        var requests = fixture.requests.makeAsyncIterator()
+        let request = try #require(await requests.next())
+        let components = try #require(request.url.flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false) })
+        #expect(components.path == "/api/json/v1/1/lookup.php")
+        #expect(components.queryItems == [URLQueryItem(name: "i", value: "52772&extra=value+plus")])
+    }
+
     @Test(arguments: ["{\"meals\":[]}", "{\"meals\":null}"])
     func lookupMissingMeal(body: String) async {
         let fixture = MealHTTPFixture(.http(200, body))
