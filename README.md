@@ -1,5 +1,3 @@
-# Seafood Recipes
-
 <p align="left">
     <img src="./DemoSeafoodRecipes/SupportingFiles/Assets.xcassets/AppIcon.appiconset/AppIcon.png" width="64" height="64" alt="App Icon" />
 </p>
@@ -8,6 +6,8 @@
 [![Platform](https://img.shields.io/badge/iOS-26.0%2B-000000.svg)](https://developer.apple.com/ios/)
 [![Xcode](https://img.shields.io/badge/Xcode-26-1575F9.svg)](https://developer.apple.com/xcode/)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
+
+# Seafood Recipes
 
 A tiny SwiftUI application, with a simple List -> Details Navigation, and a basic networking layer.
 
